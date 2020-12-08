@@ -1,3 +1,4 @@
+import State from 'lrparser-vnts/lib/utils/state'
 import {
   ActionTableDesc,
   GotoTableDesc,
@@ -9,3 +10,5 @@ export type Config = {
   action: ActionTableDesc
   goto: GotoTableDesc
 }
+
+export type ReduceFunc = (...states: State[]) => Map<string, any>

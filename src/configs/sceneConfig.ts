@@ -1,9 +1,196 @@
-import { Config } from '../@types/config'
+import { Config, ReduceFunc } from '../@types/config'
 import CharacterLink from '../gameObjects/characterLink'
+
+const prepareResult: ReduceFunc = (LL, AL) =>
+  new Map([
+    [
+      'res',
+      {
+        chars: LL.attr.get('chars'),
+        files: LL.attr.get('files'),
+        actions: AL.attr.get('list'),
+      },
+    ],
+  ])
+
+const updateLoadlist: ReduceFunc = (LL, L) =>
+  new Map([
+    ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
+    ['files', [...LL.attr.get('files'), L.attr.get('file')]],
+  ])
+const createLoadlist: ReduceFunc = (L1, L2) =>
+  new Map([
+    ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
+    ['files', [L1.attr.get('file'), L2.attr.get('file')]],
+  ])
+
+const updateActionlist: ReduceFunc = (AL, A) =>
+  new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]])
+const createActionlist: ReduceFunc = (A1, A2) =>
+  new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]])
+
+const makeActionFromSet: ReduceFunc = S =>
+  new Map([['action', S.attr.get('set')]])
+const makeActionFromPlay: ReduceFunc = P =>
+  new Map([['action', P.attr.get('play')]])
+const makeActionFromPhrase: ReduceFunc = P =>
+  new Map([['action', P.attr.get('phrase')]])
+const makeActionFromChoice: ReduceFunc = C =>
+  new Map([['action', C.attr.get('choice')]])
+const makeActionFromVarle: ReduceFunc = C =>
+  new Map([['action', C.attr.get('varle')]])
+const makeActionFromJump: ReduceFunc = J =>
+  new Map([['action', J.attr.get('jump')]])
+const makeActionFromMark: ReduceFunc = M =>
+  new Map([['action', M.attr.get('mark')]])
+const makeActionFromLoadscene: ReduceFunc = L =>
+  new Map([['action', L.attr.get('next_scene')]])
+
+const createLoad: ReduceFunc = (l, W) =>
+  new Map([
+    ['char', W.attr.get('char')],
+    ['file', W.attr.get('file')],
+  ])
+const createSet: ReduceFunc = (s, W) =>
+  new Map([['set', { type: W.attr.get('type'), payload: W.attr.get('info') }]])
+const createPlay: ReduceFunc = (p, W) =>
+  new Map([['play', { type: W.attr.get('type'), payload: W.attr.get('info') }]])
+const createPhrase: ReduceFunc = (l, O, s, w) =>
+  new Map([
+    [
+      'phrase',
+      {
+        label: l.attr.get('val'),
+        option: O.attr.get('opt'),
+        words: w.attr.get('val'),
+      },
+    ],
+  ])
+const createPhraseWithoutOptions: ReduceFunc = (l, s, w) =>
+  new Map([
+    [
+      'phrase',
+      { label: l.attr.get('val'), emotion: null, words: w.attr.get('val') },
+    ],
+  ])
+const createChoice: ReduceFunc = (P, V) =>
+  new Map([
+    [
+      'choice',
+      { question: P.attr.get('phrase'), variants: V.attr.get('list') },
+    ],
+  ])
+const createVarle: ReduceFunc = (i, C, J) =>
+  new Map([
+    ['varle', { condition: C.attr.get('value'), target: J.attr.get('jump') }],
+  ])
+const createJump: ReduceFunc = (j, mn) =>
+  new Map([
+    ['jump', { name: 'make_jump', payload: { mark_name: mn.attr.get('val') } }],
+  ])
+const createMark: ReduceFunc = (m, mn) =>
+  new Map([
+    [
+      'mark',
+      { name: 'create_mark', payload: { mark_name: mn.attr.get('val') } },
+    ],
+  ])
+const createLoadscene: ReduceFunc = (l, p) =>
+  new Map([['path', p.attr.get('val')]])
+
+const createVarlist: ReduceFunc = V =>
+  new Map([['list', [V.attr.get('variant')]]])
+const updateVarlist: ReduceFunc = (VL, s, V) =>
+  new Map([['list', [...VL.attr.get('list'), V.attr.get('variant')]]])
+
+const createVariants: ReduceFunc = (op, V1, s, V2, cl) =>
+  new Map([['list', [V1.attr.get('variant'), V2.attr.get('variant')]]])
+const createVariantSingleEffect: ReduceFunc = (w, s, E) =>
+  new Map([
+    ['variant', { value: w.attr.get('val'), effect: E.attr.get('effect') }],
+  ])
+const createVariantMultiEffect: ReduceFunc = (w, s, EL) =>
+  new Map([
+    ['variant', { text: w.attr.get('val'), effects: EL.attr.get('list') }],
+  ])
+
+const createEffectlist: ReduceFunc = (E1, c, E2) =>
+  new Map([['list', [E1.attr.get('effect'), E2.attr.get('effect')]]])
+const createEffectFlag: ReduceFunc = (f, e, b) =>
+  new Map([
+    [
+      'effect',
+      { name: 'set_flag', value: [f.attr.get('val'), b.attr.get('val')] },
+    ],
+  ])
+const createEffectCounter: ReduceFunc = (cn, op, d) =>
+  new Map([
+    [
+      'effect',
+      {
+        name: 'change_counter',
+        value: [cn.attr.get('val'), op.attr.get('val'), d.attr.get('val')],
+      },
+    ],
+  ])
+
+const createOptionsPosition: ReduceFunc = (o, p, c) =>
+  new Map([['opt', { pos: p.attr.get('val'), em: null }]])
+const createOptionsEmotion: ReduceFunc = (o, e, c) =>
+  new Map([['opt', { pos: null, em: e.attr.get('val') }]])
+const createOptionsPositionAndEmotion: ReduceFunc = (o, p, c, e, cl) =>
+  new Map([['opt', { pos: p.attr.get('val'), em: e.attr.get('val') }]])
+
+const createConditionCounter: ReduceFunc = (cn, bo, d) =>
+  new Map([
+    [
+      'value',
+      {
+        counter: cn.attr.get('val'),
+        op: bo.attr.get('val'),
+        digit: d.attr.get('val'),
+      },
+    ],
+  ])
+const createConditionFlag: ReduceFunc = (f, i, b) =>
+  new Map([['value', { flag: f.attr.get('val'), bool: b.attr.get('val') }]])
+const createConditionAnd: ReduceFunc = (C1, a, C2) => new Map([])
+const createConditionOr: ReduceFunc = (C1, o, C2) => new Map([])
+const createConditionNot: ReduceFunc = (n, C) => new Map([])
+
+const createSetBackground: ReduceFunc = (b, n) =>
+  new Map([
+    ['type', 'background'],
+    ['info', n.attr.get('val')],
+  ])
+const createSetText: ReduceFunc = (t, w) =>
+  new Map([
+    ['type', 'text'],
+    ['info', w.attr.get('val')],
+  ])
+const createSetBlackout: ReduceFunc = b =>
+  new Map([
+    ['type', 'blackout'],
+    ['info', null],
+  ])
+
+const createPlaySound: ReduceFunc = (s, n) =>
+  new Map([
+    ['type', 'sound'],
+    ['info', n.attr.get('val')],
+  ])
+
+const createLoadCharacter: ReduceFunc = (c, n, s, l) =>
+  new Map([['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))]])
+const createLoadImage: ReduceFunc = (s, p) =>
+  new Map([['file', { type: 'image', payload: p.attr.get('val') }]])
+const createLoadSound: ReduceFunc = (s, p) =>
+  new Map([['file', { type: 'sound', payload: p.attr.get('val') }]])
 
 const sceneConfig: Config = {
   patterns: [
     { regex: /^[ \n\t]+/, tag: 'None', hasLexVal: false },
+    { regex: /^#[\w\d ]*#/, tag: 'None', hasLexVal: false },
     { regex: /^load_scene/, tag: 'load_scene', hasLexVal: false },
     { regex: /^load/, tag: 'load', hasLexVal: false },
     { regex: /^character/, tag: 'character', hasLexVal: false },
@@ -15,12 +202,15 @@ const sceneConfig: Config = {
     { regex: /^background/, tag: 'background', hasLexVal: false },
     { regex: /^text/, tag: 'text', hasLexVal: false },
     { regex: /^blackout/, tag: 'blackout', hasLexVal: false },
+    { regex: /^(left|center|right)/, tag: 'position', hasLexVal: true },
     { regex: /^mark[^_]/, tag: 'mark', hasLexVal: false },
     { regex: /^if/, tag: 'if', hasLexVal: false },
     { regex: /^is/, tag: 'is', hasLexVal: false },
     { regex: /^:/, tag: 'colon', hasLexVal: false },
     { regex: /^{/, tag: 'curly_brackets_open', hasLexVal: false },
     { regex: /^}/, tag: 'curly_brackets_close', hasLexVal: false },
+    { regex: /^\(/, tag: 'brackets_open', hasLexVal: false },
+    { regex: /^\)/, tag: 'brackets_close', hasLexVal: false },
     { regex: /^;/, tag: 'semicolon', hasLexVal: false },
     { regex: /^,/, tag: 'comma', hasLexVal: false },
     { regex: /^=/, tag: 'equals', hasLexVal: false },
@@ -32,7 +222,6 @@ const sceneConfig: Config = {
     { regex: /^mark_[_\w]+/, tag: 'mark_name', hasLexVal: true },
     { regex: /^counter_[_\w]+/, tag: 'counter_name', hasLexVal: true },
     { regex: /^flag_[_\w]+/, tag: 'flag_name', hasLexVal: true },
-    { regex: /^#[ \.#\,\-\!\?\w\d]*#/, tag: 'comment', hasLexVal: true },
     { regex: /^\"\w[\w\d\./\\]+\"/, tag: 'path', hasLexVal: true },
     { regex: /^\"[ \.\,\-\!\?\w\d{}<>/`]*\"/, tag: 'words', hasLexVal: true },
     { regex: /^\w[_\w]+/, tag: 'name', hasLexVal: true },
@@ -41,131 +230,23 @@ const sceneConfig: Config = {
   action: [
     {
       stateName: 'DOWN',
-      items: [
-        { type: 'shift', fromState: 'load', toState: 'load' },
-        { type: 'shift', fromState: 'comment', toState: 'comment' },
-      ],
+      items: [{ type: 'shift', fromState: 'load', toState: 'load' }],
     },
     {
       stateName: 'MAIN',
       items: [{ type: 'finish', fromState: 'eof', toState: 'ok' }],
     },
     {
-      stateName: 'LOADLIST1',
+      stateName: 'LOADLIST',
       items: [
         { type: 'shift', fromState: 'load', toState: 'load' },
         { type: 'shift', fromState: 'label', toState: 'label1' },
         { type: 'shift', fromState: 'set', toState: 'set' },
         { type: 'shift', fromState: 'play', toState: 'play' },
-        { type: 'shift', fromState: 'comment', toState: 'comment' },
         { type: 'shift', fromState: 'if', toState: 'if' },
         { type: 'shift', fromState: 'jump', toState: 'jump' },
         { type: 'shift', fromState: 'mark', toState: 'mark' },
         { type: 'shift', fromState: 'load_scene', toState: 'load_scene' },
-      ],
-    },
-    {
-      stateName: 'LOADLIST2',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'load',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'label',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'set',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'play',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'if',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'jump',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'mark',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'load_scene',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (C, LL) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
       ],
     },
     {
@@ -174,7 +255,6 @@ const sceneConfig: Config = {
         { type: 'shift', fromState: 'label', toState: 'label1' },
         { type: 'shift', fromState: 'set', toState: 'set' },
         { type: 'shift', fromState: 'play', toState: 'play' },
-        { type: 'shift', fromState: 'comment', toState: 'comment' },
         { type: 'shift', fromState: 'if', toState: 'if' },
         { type: 'shift', fromState: 'jump', toState: 'jump' },
         { type: 'shift', fromState: 'mark', toState: 'mark' },
@@ -184,17 +264,7 @@ const sceneConfig: Config = {
           fromState: 'eof',
           toState: 'MAIN',
           countArgs: 2,
-          func: (LL, AL) =>
-            new Map([
-              [
-                'res',
-                {
-                  chars: LL.attr.get('chars'),
-                  files: LL.attr.get('files'),
-                  actions: AL.attr.get('list'),
-                },
-              ],
-            ]),
+          func: prepareResult,
         },
       ],
     },
@@ -210,99 +280,56 @@ const sceneConfig: Config = {
           fromState: 'load',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'label',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
+          func: updateLoadlist,
         },
       ],
     },
@@ -314,382 +341,56 @@ const sceneConfig: Config = {
           fromState: 'load',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
+          func: createLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'label',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
+          func: createLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
+          func: createLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
+          func: createLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
+          func: createLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
+          func: createLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
+          func: createLoadlist,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'LOADLIST',
           countArgs: 2,
-          func: (L1, L2) =>
-            new Map([
-              ['chars', [L1.attr.get('char'), L2.attr.get('char')]],
-              ['files', [L1.attr.get('file'), L2.attr.get('file')]],
-            ]),
-        },
-      ],
-    },
-    {
-      stateName: 'LOAD4',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'load',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'label',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'set',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'play',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'if',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'jump',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'mark',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'load_scene',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, L) =>
-            new Map([
-              ['chars', [...LL.attr.get('chars'), L.attr.get('char')]],
-              ['files', [...LL.attr.get('files'), L.attr.get('file')]],
-            ]),
-        },
-      ],
-    },
-    {
-      stateName: 'COM1',
-      items: [
-        { type: 'shift', fromState: 'load', toState: 'load' },
-        { type: 'shift', fromState: 'comment', toState: 'comment' },
-      ],
-    },
-    {
-      stateName: 'COM2',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'load',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'label',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'set',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'play',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'if',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'jump',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'mark',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'load_scene',
-          toState: 'LOADLIST',
-          countArgs: 2,
-          func: (LL, C) =>
-            new Map([
-              ['chars', LL.attr.get('chars')],
-              ['files', LL.attr.get('files')],
-            ]),
-        },
-      ],
-    },
-    {
-      stateName: 'COM3',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'label',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'set',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'play',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'if',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'jump',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'mark',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'load_scene',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'eof',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, C) => new Map([['list', AL.attr.get('list')]]),
+          func: createLoadlist,
         },
       ],
     },
@@ -713,72 +414,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (AL, A) =>
-            new Map([['list', [...AL.attr.get('list'), A.attr.get('action')]]]),
+          func: createActionlist,
         },
       ],
     },
@@ -790,72 +475,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTIONLIST',
-          countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTIONLIST',
           countArgs: 2,
-          func: (A1, A2) =>
-            new Map([['list', [A1.attr.get('action'), A2.attr.get('action')]]]),
+          func: updateActionlist,
         },
       ],
     },
@@ -867,63 +536,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: S => new Map([['action', S.attr.get('set')]]),
+          func: makeActionFromSet,
         },
       ],
     },
@@ -935,63 +597,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('play')]]),
+          func: makeActionFromPlay,
         },
       ],
     },
@@ -1003,28 +658,21 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         { type: 'shift', fromState: 'curly_brackets_open', toState: '{' },
         {
@@ -1032,35 +680,35 @@ const sceneConfig: Config = {
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
       ],
     },
@@ -1072,63 +720,57 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
-        },
+        { type: 'shift', fromState: 'curly_brackets_open', toState: '{' },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: P => new Map([['action', P.attr.get('phrase')]]),
+          func: makeActionFromPhrase,
         },
       ],
     },
@@ -1140,63 +782,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: C => new Map([['action', C.attr.get('choice')]]),
+          func: makeActionFromChoice,
         },
       ],
     },
@@ -1208,63 +843,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: V => new Map([['action', V.attr.get('varle')]]),
+          func: makeActionFromVarle,
         },
       ],
     },
@@ -1276,63 +904,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: J => new Map([['action', J.attr.get('jump')]]),
+          func: makeActionFromJump,
         },
       ],
     },
@@ -1344,117 +965,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'VARLE',
-          countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'VARLE',
           countArgs: 3,
-          func: (i, C, J) =>
-            new Map([
-              [
-                'varle',
-                { condition: C.attr.get('value'), target: J.attr.get('jump') },
-              ],
-            ]),
+          func: createVarle,
         },
       ],
     },
@@ -1466,63 +1026,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: M => new Map([['action', M.attr.get('mark')]]),
+          func: makeActionFromMark,
         },
       ],
     },
@@ -1534,63 +1087,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'ACTION',
-          countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'ACTION',
           countArgs: 1,
-          func: L => new Map([['action', L.attr.get('next_scene')]]),
+          func: makeActionFromLoadscene,
         },
       ],
     },
@@ -1602,99 +1148,56 @@ const sceneConfig: Config = {
           fromState: 'load',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
         {
           type: 'reduce',
           fromState: 'label',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'LOAD',
-          countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'LOAD',
           countArgs: 2,
-          func: (l, W) =>
-            new Map([
-              ['char', W.attr.get('char')],
-              ['file', W.attr.get('file')],
-            ]),
+          func: createLoad,
         },
       ],
     },
@@ -1706,117 +1209,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'SET',
-          countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'SET',
           countArgs: 2,
-          func: (s, W) =>
-            new Map([
-              [
-                'set',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createSet,
         },
       ],
     },
@@ -1828,117 +1270,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'PLAY',
-          countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'PLAY',
           countArgs: 2,
-          func: (p, W) =>
-            new Map([
-              [
-                'play',
-                { type: W.attr.get('type'), payload: W.attr.get('info') },
-              ],
-            ]),
+          func: createPlay,
         },
       ],
     },
@@ -1950,155 +1331,81 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'CHOICE',
-          countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'CHOICE',
           countArgs: 2,
-          func: (P, V) =>
-            new Map([
-              [
-                'choice',
-                {
-                  question: P.attr.get('phrase'),
-                  variants: V.attr.get('list'),
-                },
-              ],
-            ]),
+          func: createChoice,
         },
       ],
     },
     {
       stateName: 'VAR1',
-      items: [{ type: 'shift', fromState: 'semicolon', toState: ';' }],
+      items: [
+        {
+          type: 'reduce',
+          fromState: 'curly_brackets_close',
+          toState: 'VARLIST',
+          countArgs: 1,
+          func: createVarlist,
+        },
+      ],
     },
     {
       stateName: 'VAR2',
       items: [
-        { type: 'shift', fromState: 'curly_brackets_close', toState: '}' },
+        {
+          type: 'reduce',
+          fromState: 'curly_brackets_close',
+          toState: 'VARLIST',
+          countArgs: 3,
+          func: updateVarlist,
+        },
       ],
     },
     {
@@ -2106,31 +1413,12 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: 'semicolon',
-          toState: 'VAR',
-          countArgs: 3,
-          func: (w, s, E) =>
-            new Map([
-              [
-                'variant',
-                { value: w.attr.get('val'), effect: E.attr.get('effect') },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
           fromState: 'curly_brackets_close',
           toState: 'VAR',
           countArgs: 3,
-          func: (w, s, E) =>
-            new Map([
-              [
-                'variant',
-                { value: w.attr.get('val'), effect: E.attr.get('effect') },
-              ],
-            ]),
+          func: createVariantSingleEffect,
         },
-        { type: 'shift', fromState: 'comma', toState: ',' },
+        { type: 'shift', fromState: 'comma', toState: ',2' },
       ],
     },
     {
@@ -2138,19 +1426,10 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: 'semicolon',
-          toState: 'EFFLIST',
-          countArgs: 3,
-          func: (E1, c, E2) =>
-            new Map([['list', [E1.attr.get('effect'), E2.attr.get('effect')]]]),
-        },
-        {
-          type: 'reduce',
           fromState: 'curly_brackets_close',
           toState: 'EFFLIST',
           countArgs: 3,
-          func: (E1, c, E2) =>
-            new Map([['list', [E1.attr.get('effect'), E2.attr.get('effect')]]]),
+          func: createEffectlist,
         },
       ],
     },
@@ -2159,35 +1438,116 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: 'semicolon',
-          toState: 'VAR',
-          countArgs: 3,
-          func: (w, s, EL) =>
-            new Map([
-              [
-                'variant',
-                { text: w.attr.get('val'), effects: EL.attr.get('list') },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
           fromState: 'curly_brackets_close',
           toState: 'VAR',
           countArgs: 3,
-          func: (w, s, EL) =>
-            new Map([
-              [
-                'variant',
-                { text: w.attr.get('val'), effects: EL.attr.get('list') },
-              ],
-            ]),
+          func: createVariantMultiEffect,
         },
       ],
     },
     {
-      stateName: 'COND',
-      items: [{ type: 'shift', fromState: 'jump', toState: 'jump' }],
+      stateName: 'COND1',
+      items: [
+        { type: 'shift', fromState: 'jump', toState: 'jump' },
+        { type: 'shift', fromState: 'and', toState: 'and' },
+        { type: 'shift', fromState: 'or', toState: 'or' },
+      ],
+    },
+    {
+      stateName: 'COND2',
+      items: [
+        {
+          type: 'reduce',
+          fromState: 'jump',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionAnd,
+        },
+        {
+          type: 'reduce',
+          fromState: 'and',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionAnd,
+        },
+        {
+          type: 'reduce',
+          fromState: 'or',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionAnd,
+        },
+        { type: 'shift', fromState: 'not', toState: 'not' },
+        { type: 'shift', fromState: 'and', toState: 'and' },
+        { type: 'shift', fromState: 'or', toState: 'or' },
+      ],
+    },
+    {
+      stateName: 'COND3',
+      items: [
+        {
+          type: 'reduce',
+          fromState: 'jump',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionOr,
+        },
+        {
+          type: 'reduce',
+          fromState: 'and',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionOr,
+        },
+        {
+          type: 'reduce',
+          fromState: 'or',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionOr,
+        },
+        { type: 'shift', fromState: 'and', toState: 'and' },
+        { type: 'shift', fromState: 'or', toState: 'or' },
+      ],
+    },
+    {
+      stateName: 'COND4',
+      items: [
+        {
+          type: 'reduce',
+          fromState: 'jump',
+          toState: 'COND',
+          countArgs: 2,
+          func: createConditionNot,
+        },
+        {
+          type: 'reduce',
+          fromState: 'and',
+          toState: 'COND',
+          countArgs: 2,
+          func: createConditionNot,
+        },
+        {
+          type: 'reduce',
+          fromState: 'or',
+          toState: 'COND',
+          countArgs: 2,
+          func: createConditionNot,
+        },
+        { type: 'shift', fromState: 'and', toState: 'and' },
+        { type: 'shift', fromState: 'or', toState: 'or' },
+      ],
+    },
+    {
+      stateName: 'OPTIONS',
+      items: [{ type: 'shift', fromState: ':', toState: ':2' }],
+    },
+    {
+      stateName: 'VARLIST',
+      items: [
+        { type: 'shift', fromState: 'semicolon', toState: ';' },
+        { type: 'shift', fromState: 'curly_brackets_close', toState: '}' },
+      ],
     },
     {
       stateName: 'load',
@@ -2203,7 +1563,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: 'name1',
-      items: [{ type: 'shift', fromState: 'colon', toState: ':3' }],
+      items: [{ type: 'shift', fromState: 'colon', toState: ':4' }],
     },
     {
       stateName: 'name2',
@@ -2213,99 +1573,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'WHSET',
           countArgs: 2,
-          func: (b, n) =>
-            new Map([
-              ['type', 'background'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createSetBackground,
         },
       ],
     },
@@ -2317,126 +1634,83 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'WHPLAY',
-          countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'WHPLAY',
           countArgs: 2,
-          func: (s, n) =>
-            new Map([
-              ['type', 'sound'],
-              ['info', n.attr.get('val')],
-            ]),
+          func: createPlaySound,
         },
       ],
     },
     {
       stateName: ':1',
-      items: [{ type: 'shift', fromState: 'words', toState: 'words3' }],
+      items: [{ type: 'shift', fromState: 'words', toState: 'words2' }],
     },
     {
       stateName: ':2',
-      items: [{ type: 'shift', fromState: 'words', toState: 'words4' }],
+      items: [{ type: 'shift', fromState: 'words', toState: 'words3' }],
     },
     {
       stateName: ':3',
-      items: [{ type: 'shift', fromState: 'label', toState: 'label2' }],
+      items: [
+        { type: 'shift', fromState: 'flag_name', toState: 'flag_name1' },
+        { type: 'shift', fromState: 'counter_name', toState: 'counter_name1' },
+      ],
     },
     {
       stateName: ':4',
-      items: [
-        { type: 'shift', fromState: 'flag_name', toState: 'flag_name2' },
-        { type: 'shift', fromState: 'counter_name', toState: 'counter_name2' },
-      ],
+      items: [{ type: 'shift', fromState: 'label', toState: 'label2' }],
     },
     {
       stateName: 'label1',
       items: [
         { type: 'shift', fromState: 'colon', toState: ':1' },
-        { type: 'shift', fromState: 'emotion', toState: 'emotion' },
+        { type: 'shift', fromState: 'brackets_open', toState: '(' },
       ],
     },
     {
@@ -2447,96 +1721,62 @@ const sceneConfig: Config = {
           fromState: 'load',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
         {
           type: 'reduce',
           fromState: 'label',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'WHLOAD',
-          countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'WHLOAD',
           countArgs: 4,
-          func: (c, n, s, l) =>
-            new Map([
-              ['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))],
-            ]),
+          func: createLoadCharacter,
         },
       ],
     },
     {
       stateName: 'image',
-      items: [{ type: 'shift', fromState: 'path', toState: 'path3' }],
+      items: [{ type: 'shift', fromState: 'path', toState: 'path2' }],
     },
     {
       stateName: 'path1',
@@ -2546,63 +1786,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'LOADSCENE',
-          countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'LOADSCENE',
           countArgs: 2,
-          func: (l, p) => new Map([['path', p.attr.get('val')]]),
+          func: createLoadscene,
         },
       ],
     },
@@ -2614,72 +1847,56 @@ const sceneConfig: Config = {
           fromState: 'load',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
         {
           type: 'reduce',
           fromState: 'label',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'WHLOAD',
-          countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'sound', payload: p.attr.get('val') }]]),
+          func: createLoadImage,
         },
       ],
     },
@@ -2691,78 +1908,62 @@ const sceneConfig: Config = {
           fromState: 'load',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
         {
           type: 'reduce',
           fromState: 'label',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'WHLOAD',
-          countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'WHLOAD',
           countArgs: 2,
-          func: (s, p) =>
-            new Map([['file', { type: 'image', payload: p.attr.get('val') }]]),
+          func: createLoadSound,
         },
       ],
     },
     {
       stateName: 'sound1',
-      items: [{ type: 'shift', fromState: 'path', toState: 'path2' }],
+      items: [{ type: 'shift', fromState: 'path', toState: 'path3' }],
     },
     {
       stateName: 'sound2',
@@ -2782,11 +1983,68 @@ const sceneConfig: Config = {
     },
     {
       stateName: 'text',
-      items: [{ type: 'shift', fromState: 'words', toState: 'words2' }],
+      items: [{ type: 'shift', fromState: 'words', toState: 'words1' }],
     },
     {
       stateName: 'words1',
-      items: [{ type: 'shift', fromState: 'colon', toState: ':4' }],
+      items: [
+        {
+          type: 'reduce',
+          fromState: 'label',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+        {
+          type: 'reduce',
+          fromState: 'set',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+        {
+          type: 'reduce',
+          fromState: 'play',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+        {
+          type: 'reduce',
+          fromState: 'if',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+        {
+          type: 'reduce',
+          fromState: 'jump',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+        {
+          type: 'reduce',
+          fromState: 'mark',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+        {
+          type: 'reduce',
+          fromState: 'load_scene',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+        {
+          type: 'reduce',
+          fromState: 'eof',
+          toState: 'WHSET',
+          countArgs: 2,
+          func: createSetText,
+        },
+      ],
     },
     {
       stateName: 'words2',
@@ -2794,101 +2052,65 @@ const sceneConfig: Config = {
         {
           type: 'reduce',
           fromState: 'label',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
         {
           type: 'reduce',
           fromState: 'set',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
+        },
+        {
+          type: 'reduce',
+          fromState: 'curly_brackets_open',
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
         {
           type: 'reduce',
           fromState: 'play',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
         {
           type: 'reduce',
           fromState: 'if',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
         {
           type: 'reduce',
           fromState: 'jump',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
         {
           type: 'reduce',
           fromState: 'mark',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
         {
           type: 'reduce',
           fromState: 'eof',
-          toState: 'WHSET',
-          countArgs: 2,
-          func: (t, w) =>
-            new Map([
-              ['type', 'text'],
-              ['info', w.attr.get('val')],
-            ]),
+          toState: 'PHRWE',
+          countArgs: 3,
+          func: createPhraseWithoutOptions,
         },
       ],
     },
@@ -2898,332 +2120,71 @@ const sceneConfig: Config = {
         {
           type: 'reduce',
           fromState: 'label',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'set',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'play',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'if',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'jump',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'mark',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'load_scene',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'eof',
-          toState: 'PHRWE',
-          countArgs: 3,
-          func: (l, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: null,
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-      ],
-    },
-    {
-      stateName: 'words4',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'label',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'PHR',
-          countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'curly_brackets_open',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'PHR',
           countArgs: 4,
-          func: (l, e, s, w) =>
-            new Map([
-              [
-                'phrase',
-                {
-                  label: l.attr.get('val'),
-                  emotion: e.attr.get('val'),
-                  words: w.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createPhrase,
         },
       ],
+    },
+    {
+      stateName: 'words4',
+      items: [{ type: 'shift', fromState: 'colon', toState: ':3' }],
     },
     {
       stateName: 'blackout',
@@ -3233,99 +2194,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'WHSET',
-          countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'WHSET',
           countArgs: 1,
-          func: b =>
-            new Map([
-              ['type', 'blackout'],
-              ['info', null],
-            ]),
+          func: createSetBlackout,
         },
       ],
     },
@@ -3334,83 +2252,19 @@ const sceneConfig: Config = {
       items: [{ type: 'shift', fromState: 'sound', toState: 'sound2' }],
     },
     {
-      stateName: 'comment',
+      stateName: 'position',
       items: [
-        {
-          type: 'reduce',
-          fromState: 'load',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'label',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'image',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'path',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'set',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'jump',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'mark',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'load_scene',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'eof',
-          toState: 'COM',
-          countArgs: 1,
-          func: () => new Map(),
-        },
+        { type: 'shift', fromState: 'comma', toState: ',2' },
+        { type: 'shift', fromState: 'brackets_close', toState: ')1' },
       ],
     },
     {
-      stateName: 'emotion',
-      items: [{ type: 'shift', fromState: 'colon', toState: ':2' }],
+      stateName: 'emotion1',
+      items: [{ type: 'shift', fromState: 'brackets_close', toState: ')2' }],
+    },
+    {
+      stateName: 'emotion2',
+      items: [{ type: 'shift', fromState: 'brackets_close', toState: ')3' }],
     },
     {
       stateName: '{',
@@ -3418,7 +2272,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: ';',
-      items: [{ type: 'shift', fromState: 'words', toState: 'words1' }],
+      items: [{ type: 'shift', fromState: 'words', toState: 'words4' }],
     },
     {
       stateName: '}',
@@ -3428,117 +2282,87 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'VARS',
-          countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'VARS',
           countArgs: 5,
-          func: (op, V1, s, V2, cl) =>
-            new Map([
-              ['list', [V1.attr.get('variant'), V2.attr.get('variant')]],
-            ]),
+          func: createVariants,
         },
       ],
     },
     {
       stateName: 'flag_name1',
-      items: [{ type: 'shift', fromState: 'is', toState: 'is' }],
-    },
-    {
-      stateName: 'flag_name2',
       items: [{ type: 'shift', fromState: 'equals', toState: '=' }],
     },
     {
+      stateName: 'flag_name2',
+      items: [{ type: 'shift', fromState: 'is', toState: 'is' }],
+    },
+    {
       stateName: '=',
-      items: [{ type: 'shift', fromState: 'bool', toState: 'bool2' }],
+      items: [{ type: 'shift', fromState: 'bool', toState: 'bool1' }],
     },
     {
       stateName: 'bool1',
       items: [
         {
           type: 'reduce',
-          fromState: 'jump',
-          toState: 'COND',
+          fromState: 'curly_brackets_close',
+          toState: 'EFF',
           countArgs: 3,
-          func: (f, i, b) =>
-            new Map([
-              ['value', { flag: f.attr.get('val'), bool: b.attr.get('val') }],
-            ]),
+          func: createEffectFlag,
+        },
+        {
+          type: 'reduce',
+          fromState: 'comma',
+          toState: 'EFF',
+          countArgs: 3,
+          func: createEffectFlag,
         },
       ],
     },
@@ -3547,85 +2371,62 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: 'semicolon',
-          toState: 'EFF',
+          fromState: 'jump',
+          toState: 'COND',
           countArgs: 3,
-          func: (f, e, b) =>
-            new Map([
-              [
-                'effect',
-                {
-                  name: 'set_flag',
-                  value: [f.attr.get('val'), b.attr.get('val')],
-                },
-              ],
-            ]),
+          func: createConditionFlag,
         },
         {
           type: 'reduce',
-          fromState: 'curly_brackets_close',
-          toState: 'EFF',
+          fromState: 'and',
+          toState: 'COND',
           countArgs: 3,
-          func: (f, e, b) =>
-            new Map([
-              [
-                'effect',
-                {
-                  name: 'set_flag',
-                  value: [f.attr.get('val'), b.attr.get('val')],
-                },
-              ],
-            ]),
+          func: createConditionFlag,
         },
         {
           type: 'reduce',
-          fromState: 'comma',
-          toState: 'EFF',
+          fromState: 'or',
+          toState: 'COND',
           countArgs: 3,
-          func: (f, e, b) =>
-            new Map([
-              [
-                'effect',
-                {
-                  name: 'set_flag',
-                  value: [f.attr.get('val'), b.attr.get('val')],
-                },
-              ],
-            ]),
+          func: createConditionFlag,
+        },
+        {
+          type: 'reduce',
+          fromState: 'not',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionFlag,
         },
       ],
     },
     {
       stateName: 'counter_name1',
-      items: [{ type: 'shift', fromState: 'bool_op', toState: 'bool_op' }],
-    },
-    {
-      stateName: 'counter_name2',
       items: [{ type: 'shift', fromState: 'digit_op', toState: 'digit_op' }],
     },
     {
+      stateName: 'counter_name2',
+      items: [{ type: 'shift', fromState: 'bool_op', toState: 'bool_op' }],
+    },
+    {
       stateName: 'digit_op',
-      items: [{ type: 'shift', fromState: 'digit', toState: 'digit2' }],
+      items: [{ type: 'shift', fromState: 'digit', toState: 'digit1' }],
     },
     {
       stateName: 'digit1',
       items: [
         {
           type: 'reduce',
-          fromState: 'jump',
-          toState: 'COND',
+          fromState: 'curly_brackets_close',
+          toState: 'EFF',
           countArgs: 3,
-          func: (cn, bo, d) =>
-            new Map([
-              [
-                'value',
-                {
-                  counter: cn.attr.get('val'),
-                  op: bo.attr.get('val'),
-                  digit: d.attr.get('val'),
-                },
-              ],
-            ]),
+          func: createEffectCounter,
+        },
+        {
+          type: 'reduce',
+          fromState: 'comma',
+          toState: 'EFF',
+          countArgs: 3,
+          func: createEffectCounter,
         },
       ],
     },
@@ -3634,91 +2435,64 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: 'semicolon',
-          toState: 'EFF',
+          fromState: 'jump',
+          toState: 'COND',
           countArgs: 3,
-          func: (cn, op, d) =>
-            new Map([
-              [
-                'effect',
-                {
-                  name: 'change_counter',
-                  value: [
-                    cn.attr.get('val'),
-                    op.attr.get('val'),
-                    d.attr.get('val'),
-                  ],
-                },
-              ],
-            ]),
+          func: createConditionCounter,
         },
         {
           type: 'reduce',
-          fromState: 'curly_brackets_close',
-          toState: 'EFF',
+          fromState: 'and',
+          toState: 'COND',
           countArgs: 3,
-          func: (cn, op, d) =>
-            new Map([
-              [
-                'effect',
-                {
-                  name: 'change_counter',
-                  value: [
-                    cn.attr.get('val'),
-                    op.attr.get('val'),
-                    d.attr.get('val'),
-                  ],
-                },
-              ],
-            ]),
+          func: createConditionCounter,
         },
         {
           type: 'reduce',
-          fromState: 'comma',
-          toState: 'EFF',
+          fromState: 'or',
+          toState: 'COND',
           countArgs: 3,
-          func: (cn, op, d) =>
-            new Map([
-              [
-                'effect',
-                {
-                  name: 'change_counter',
-                  value: [
-                    cn.attr.get('val'),
-                    op.attr.get('val'),
-                    d.attr.get('val'),
-                  ],
-                },
-              ],
-            ]),
+          func: createConditionCounter,
+        },
+        {
+          type: 'reduce',
+          fromState: 'not',
+          toState: 'COND',
+          countArgs: 3,
+          func: createConditionCounter,
         },
       ],
     },
     {
-      stateName: ',',
-      items: [
-        { type: 'shift', fromState: 'flag_name', toState: 'flag_name2' },
-        { type: 'shift', fromState: 'counter_name', toState: 'counter_name2' },
-      ],
+      stateName: ',1',
+      items: [{ type: 'shift', fromState: 'emotion', toState: 'emotion2' }],
     },
     {
-      stateName: 'if',
+      stateName: ',2',
       items: [
         { type: 'shift', fromState: 'flag_name', toState: 'flag_name1' },
         { type: 'shift', fromState: 'counter_name', toState: 'counter_name1' },
       ],
     },
     {
+      stateName: 'if',
+      items: [
+        { type: 'shift', fromState: 'flag_name', toState: 'flag_name2' },
+        { type: 'shift', fromState: 'counter_name', toState: 'counter_name2' },
+        { type: 'shift', fromState: 'not', toState: 'not' },
+      ],
+    },
+    {
       stateName: 'is',
-      items: [{ type: 'shift', fromState: 'bool', toState: 'bool1' }],
+      items: [{ type: 'shift', fromState: 'bool', toState: 'bool2' }],
     },
     {
       stateName: 'bool_op',
-      items: [{ type: 'shift', fromState: 'digit', toState: 'digit1' }],
+      items: [{ type: 'shift', fromState: 'digit', toState: 'digit2' }],
     },
     {
       stateName: 'jump',
-      items: [{ type: 'shift', fromState: 'mark_name', toState: 'mark_name1' }],
+      items: [{ type: 'shift', fromState: 'mark_name', toState: 'mark_name2' }],
     },
     {
       stateName: 'mark_name1',
@@ -3728,144 +2502,56 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'JUMP',
-          countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'JUMP',
           countArgs: 2,
-          func: (j, mn) =>
-            new Map([
-              [
-                'jump',
-                {
-                  name: 'make_jump',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createJump,
         },
       ],
     },
@@ -3877,150 +2563,129 @@ const sceneConfig: Config = {
           fromState: 'label',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'comment',
-          toState: 'MARK',
-          countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'MARK',
           countArgs: 2,
-          func: (m, mn) =>
-            new Map([
-              [
-                'mark',
-                {
-                  name: 'create_mark',
-                  payload: { mark_name: mn.attr.get('val') },
-                },
-              ],
-            ]),
+          func: createMark,
         },
       ],
     },
     {
       stateName: 'mark',
-      items: [{ type: 'shift', fromState: 'mark_name', toState: 'mark_name2' }],
+      items: [{ type: 'shift', fromState: 'mark_name', toState: 'mark_name1' }],
+    },
+    {
+      stateName: 'and',
+      items: [
+        { type: 'shift', fromState: 'flag_name', toState: 'flag_name2' },
+        { type: 'shift', fromState: 'counter_name', toState: 'counter_name2' },
+        { type: 'shift', fromState: 'not', toState: 'not' },
+      ],
+    },
+    {
+      stateName: 'or',
+      items: [
+        { type: 'shift', fromState: 'flag_name', toState: 'flag_name2' },
+        { type: 'shift', fromState: 'counter_name', toState: 'counter_name2' },
+        { type: 'shift', fromState: 'not', toState: 'not' },
+      ],
+    },
+    {
+      stateName: 'not',
+      items: [
+        { type: 'shift', fromState: 'flag_name', toState: 'flag_name2' },
+        { type: 'shift', fromState: 'counter_name', toState: 'counter_name2' },
+        { type: 'shift', fromState: 'not', toState: 'not' },
+      ],
+    },
+    {
+      stateName: '(',
+      items: [
+        { type: 'shift', fromState: 'position', toState: 'position' },
+        { type: 'shift', fromState: 'emotion', toState: 'emotion1' },
+      ],
+    },
+    {
+      stateName: ')1',
+      items: [
+        {
+          type: 'reduce',
+          fromState: ':',
+          toState: 'OPTIONS',
+          countArgs: 3,
+          func: createOptionsPosition,
+        },
+      ],
+    },
+    {
+      stateName: ')2',
+      items: [
+        {
+          type: 'reduce',
+          fromState: ':',
+          toState: 'OPTIONS',
+          countArgs: 3,
+          func: createOptionsEmotion,
+        },
+      ],
+    },
+    {
+      stateName: ')3',
+      items: [
+        {
+          type: 'reduce',
+          fromState: ':',
+          toState: 'OPTIONS',
+          countArgs: 5,
+          func: createOptionsPositionAndEmotion,
+        },
+      ],
     },
     {
       stateName: 'load_scene',
@@ -4032,21 +2697,19 @@ const sceneConfig: Config = {
     {
       stateName: 'DOWN',
       items: [
-        { newState: 'MAIN', nameState: 'MAIN' },
-        { newState: 'LOADLIST', nameState: 'LOADLIST1' },
+        // { newState: 'MAIN', nameState: 'MAIN' },
+        { newState: 'LOADLIST', nameState: 'LOADLIST' },
         { newState: 'LOAD', nameState: 'LOAD1' },
-        { newState: 'COM', nameState: 'COM1' },
       ],
     },
     {
-      stateName: 'LOADLIST1',
+      stateName: 'LOADLIST',
       items: [
         { newState: 'ACTIONLIST', nameState: 'ACTIONLIST' },
         { newState: 'ACTION', nameState: 'ACTION1' },
         { newState: 'LOAD', nameState: 'LOAD2' },
         { newState: 'SET', nameState: 'SET' },
         { newState: 'PLAY', nameState: 'PLAY' },
-        { newState: 'COM', nameState: 'COM2' },
         { newState: 'PHR', nameState: 'PHR' },
         { newState: 'PHRWE', nameState: 'PHRWE' },
         { newState: 'CHOICE', nameState: 'CHOICE' },
@@ -4054,43 +2717,10 @@ const sceneConfig: Config = {
         { newState: 'JUMP', nameState: 'JUMP1' },
         { newState: 'MARK', nameState: 'MARK' },
         { newState: 'LOADSCENE', nameState: 'LOADSCENE' },
-      ],
-    },
-    {
-      stateName: 'LOADLIST2',
-      items: [
-        { newState: 'LOAD', nameState: 'LOAD4' },
-        { newState: 'COM', nameState: 'COM2' },
       ],
     },
     {
       stateName: 'ACTIONLIST',
-      items: [
-        { newState: 'ACTION', nameState: 'ACTION2' },
-        { newState: 'SET', nameState: 'SET' },
-        { newState: 'PLAY', nameState: 'PLAY' },
-        { newState: 'COM', nameState: 'COM3' },
-        { newState: 'PHR', nameState: 'PHR' },
-        { newState: 'PHRWE', nameState: 'PHRWE' },
-        { newState: 'CHOICE', nameState: 'CHOICE' },
-        { newState: 'VARLE', nameState: 'VARLE' },
-        { newState: 'JUMP', nameState: 'JUMP1' },
-        { newState: 'MARK', nameState: 'MARK' },
-        { newState: 'LOADSCENE', nameState: 'LOADSCENE' },
-      ],
-    },
-    { stateName: 'LOAD1', items: [{ newState: 'LOAD', nameState: 'LOAD3' }] },
-    { stateName: 'LOAD4', items: [{ newState: 'LOAD', nameState: 'LOAD1' }] },
-    {
-      stateName: 'COM1',
-      items: [
-        { newState: 'LOADLIST', nameState: 'LOADLIST2' },
-        { newState: 'LOAD', nameState: 'LOAD1' },
-        { newState: 'COM', nameState: 'COM1' },
-      ],
-    },
-    {
-      stateName: 'ACTION1',
       items: [
         { newState: 'ACTION', nameState: 'ACTION3' },
         { newState: 'SET', nameState: 'SET' },
@@ -4104,11 +2734,28 @@ const sceneConfig: Config = {
         { newState: 'LOADSCENE', nameState: 'LOADSCENE' },
       ],
     },
+    { stateName: 'LOAD1', items: [{ newState: 'LOAD', nameState: 'LOAD3' }] },
+    {
+      stateName: 'ACTION1',
+      items: [
+        { newState: 'ACTION', nameState: 'ACTION2' },
+        { newState: 'SET', nameState: 'SET' },
+        { newState: 'PLAY', nameState: 'PLAY' },
+        { newState: 'PHR', nameState: 'PHR' },
+        { newState: 'PHRWE', nameState: 'PHRWE' },
+        { newState: 'CHOICE', nameState: 'CHOICE' },
+        { newState: 'VARLE', nameState: 'VARLE' },
+        { newState: 'JUMP', nameState: 'JUMP1' },
+        { newState: 'MARK', nameState: 'MARK' },
+        { newState: 'LOADSCENE', nameState: 'LOADSCENE' },
+      ],
+    },
     { stateName: 'PHR', items: [{ newState: 'VARS', nameState: 'VARS' }] },
-    { stateName: 'COND', items: [{ newState: 'JUMP', nameState: 'JUMP2' }] },
+    { stateName: 'PHRWE', items: [{ newState: 'VARS', nameState: 'VARS' }] },
+    { stateName: 'COND1', items: [{ newState: 'JUMP', nameState: 'JUMP2' }] },
     { stateName: 'load', items: [{ newState: 'WHLOAD', nameState: 'WHLOAD' }] },
     {
-      stateName: ':4',
+      stateName: ':3',
       items: [
         { newState: 'EFF', nameState: 'EFF1' },
         { newState: 'EFFLIST', nameState: 'EFFLIST' },
@@ -4116,10 +2763,19 @@ const sceneConfig: Config = {
     },
     { stateName: 'set', items: [{ newState: 'WHSET', nameState: 'WHSET' }] },
     { stateName: 'play', items: [{ newState: 'WHPLAY', nameState: 'WHPLAY' }] },
-    { stateName: '{', items: [{ newState: 'VAR', nameState: 'VAR1' }] },
+    {
+      stateName: '{',
+      items: [
+        { newState: 'VAR', nameState: 'VAR1' },
+        { newState: 'VARLIST', nameState: 'VARLIST' },
+      ],
+    },
     { stateName: ';', items: [{ newState: 'VAR', nameState: 'VAR2' }] },
     { stateName: ',', items: [{ newState: 'EFF', nameState: 'EFF2' }] },
-    { stateName: 'if', items: [{ newState: 'COND', nameState: 'COND' }] },
+    { stateName: 'if', items: [{ newState: 'COND', nameState: 'COND1' }] },
+    { stateName: 'and', items: [{ newState: 'COND', nameState: 'COND2' }] },
+    { stateName: 'or', items: [{ newState: 'COND', nameState: 'COND3' }] },
+    { stateName: 'not', items: [{ newState: 'COND', nameState: 'COND4' }] },
   ],
 }
 

@@ -1,5 +1,27 @@
-import { Attr } from '../../node_modules/lrparser-vnts/lib/utils/utils'
-import { Config } from '../@types/config'
+import { Config, ReduceFunc } from '../@types/config'
+import Character from '../gameObjects/character'
+import Sprite from '../gameObjects/sprite'
+
+const updateCharacterList: ReduceFunc = (CS, C) =>
+  new Map([['list', [...CS.attr.get('list'), C.attr.get('char')]]])
+const createCharacterList: ReduceFunc = (C1, C2) =>
+  new Map([['list', [C1.attr.get('char'), C2.attr.get('char')]]])
+
+const updateSpriteList: ReduceFunc = (SS, S) =>
+  new Map([['list', [...SS.attr.get('list'), S.attr.get('sprite')]]])
+const createSpriteList: ReduceFunc = (S1, S2) =>
+  new Map([['list', [S1.attr.get('sprite'), S2.attr.get('sprite')]]])
+
+const createCharacterWithoutSprites: ReduceFunc = (c, n) =>
+  new Map([['char', new Character(n.attr.get('val'))]])
+const createCharacter: ReduceFunc = (c, n, op, SS, cl) =>
+  new Map([['char', new Character(n.attr.get('val'), SS.attr.get('list'))]])
+
+const createSprite: ReduceFunc = (f, e, p) =>
+  new Map([['sprite', new Sprite(f.attr.get('val'), p.attr.get('val'))]])
+
+const prepareResult: ReduceFunc = (CS, e) =>
+  new Map([['res', CS.attr.get('list')]])
 
 const characterConfig: Config = {
   patterns: [
@@ -12,18 +34,15 @@ const characterConfig: Config = {
     { regex: /^playerName/, tag: 'name', hasLexVal: true },
 
     { regex: /^\.[\w]*/, tag: 'field', hasLexVal: true },
+    { regex: /^#[\w\d ]*#/, tag: 'None', hasLexVal: false },
     { regex: /^"[\w\d./\\]*"/, tag: 'path', hasLexVal: true },
-    { regex: /^#[ .#,\-!?\w\d]*#/, tag: 'text', hasLexVal: true },
 
     { regex: /^[\w]*/, tag: 'name', hasLexVal: true },
   ],
   action: [
     {
       stateName: 'DOWN',
-      items: [
-        { type: 'shift', fromState: 'character', toState: 'character2' },
-        { type: 'shift', fromState: 'text', toState: 'text2' },
-      ],
+      items: [{ type: 'shift', fromState: 'character', toState: 'character' }],
     },
     {
       stateName: 'MAIN',
@@ -32,45 +51,13 @@ const characterConfig: Config = {
     {
       stateName: 'CHARACTERS',
       items: [
-        { type: 'shift', fromState: 'character', toState: 'character1' },
+        { type: 'shift', fromState: 'character', toState: 'character' },
         { type: 'shift', fromState: 'end', toState: 'end' },
-        { type: 'shift', fromState: 'text', toState: 'text2' },
       ],
     },
     {
       stateName: 'CHARACTER1',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'CHARACTERS',
-          countArgs: 2,
-          func: (CS, C) =>
-            new Map<string, Attr>([
-              ['list', [...CS.attr.get('list'), C.attr.get('char')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'end',
-          toState: 'CHARACTERS',
-          countArgs: 2,
-          func: (CS, C) =>
-            new Map<string, Attr>([
-              ['list', [...CS.attr.get('list'), C.attr.get('char')]],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTERS',
-          countArgs: 2,
-          func: (CS, C) =>
-            new Map<string, Attr>([
-              ['list', [...CS.attr.get('list'), C.attr.get('char')]],
-            ]),
-        },
-      ],
+      items: [{ type: 'shift', fromState: 'character', toState: 'character' }],
     },
     {
       stateName: 'CHARACTER2',
@@ -78,300 +65,116 @@ const characterConfig: Config = {
         {
           type: 'reduce',
           fromState: 'character',
-          toState: 'CHARACTER',
+          toState: 'CHARACTERS',
           countArgs: 2,
-          func: (COM, C) => new Map([['char', C.attr.get('char')]]),
+          func: updateCharacterList,
         },
         {
           type: 'reduce',
           fromState: 'end',
-          toState: 'CHARACTER',
+          toState: 'CHARACTERS',
           countArgs: 2,
-          func: (COM, C) => new Map([['char', C.attr.get('char')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (COM, C) => new Map([['char', C.attr.get('char')]]),
+          func: updateCharacterList,
         },
       ],
     },
     {
       stateName: 'CHARACTER3',
       items: [
-        { type: 'shift', fromState: 'character', toState: 'character1' },
-        { type: 'shift', fromState: 'text', toState: 'text2' },
-      ],
-    },
-    {
-      stateName: 'CHARACTER4',
-      items: [
         {
           type: 'reduce',
           fromState: 'character',
           toState: 'CHARACTERS',
           countArgs: 2,
-          func: (C1, C2) =>
-            new Map([['list', [C1.attr.get('char'), C2.attr.get('char')]]]),
+          func: createCharacterList,
         },
         {
           type: 'reduce',
           fromState: 'end',
           toState: 'CHARACTERS',
           countArgs: 2,
-          func: (C1, C2) =>
-            new Map([['list', [C1.attr.get('char'), C2.attr.get('char')]]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTERS',
-          countArgs: 2,
-          func: (C1, C2) =>
-            new Map([['list', [C1.attr.get('char'), C2.attr.get('char')]]]),
+          func: createCharacterList,
         },
       ],
     },
     {
-      stateName: 'CHARACTER5',
+      stateName: 'SPRITES',
       items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (COM, C) => new Map([['char', C.attr.get('char')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (COM, C) => new Map([['char', C.attr.get('char')]]),
-        },
+        { type: 'shift', fromState: 'field', toState: 'field' },
+        { type: 'shift', fromState: 'close', toState: '}' },
       ],
     },
     {
-      stateName: 'COMMENT1',
+      stateName: 'SPRITES',
       items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (COM, C) => new Map([['char', C.attr.get('char')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'end',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (C, COM) => new Map([['char', C.attr.get('char')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (C, COM) => new Map([['char', C.attr.get('char')]]),
-        },
-      ],
-    },
-    {
-      stateName: 'COMMENT2',
-      items: [
-        { type: 'shift', fromState: 'character', toState: 'character1' },
-        { type: 'shift', fromState: 'text', toState: 'text2' },
-      ],
-    },
-    {
-      stateName: 'COMMENT3',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (C, COM) => new Map([['char', C.attr.get('char')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (C, COM) => new Map([['char', C.attr.get('char')]]),
-        },
-      ],
-    },
-    {
-      stateName: 'COMMENT4',
-      items: [
-        {
-          type: 'shift',
-          fromState: 'character',
-          toState: 'character2',
-        },
-        {
-          type: 'shift',
-          fromState: 'text',
-          toState: 'text2',
-        },
-      ],
-    },
-    {
-      stateName: 'COMMENT5',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (C, COM) => new Map([['char', C.attr.get('char')]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (C, COM) => new Map([['char', C.attr.get('char')]]),
-        },
-      ],
-    },
-    {
-      stateName: 'SPRITES1',
-      items: [
-        {
-          type: 'shift',
-          fromState: 'name',
-          toState: 'name2',
-        },
-        {
-          type: 'shift',
-          fromState: 'close',
-          toState: '}1',
-        },
-      ],
-    },
-    {
-      stateName: 'SPRITES2',
-      items: [
-        {
-          type: 'shift',
-          fromState: 'name',
-          toState: 'name2',
-        },
-        {
-          type: 'shift',
-          fromState: 'close',
-          toState: '}2',
-        },
+        { type: 'shift', fromState: 'field', toState: 'field' },
+        { type: 'shift', fromState: 'close', toState: '}' },
       ],
     },
     {
       stateName: 'SPRITE1',
+      items: [{ type: 'shift', fromState: 'field', toState: 'field' }],
+    },
+    {
+      stateName: 'SPRITE2',
       items: [
         {
           type: 'reduce',
-          fromState: 'name',
+          fromState: 'field',
           toState: 'SPRITES',
           countArgs: 2,
-          func: (SS, S) =>
-            new Map([['list', [...SS.attr.get('list'), S.attr.get('sprite')]]]),
+          func: updateSpriteList,
         },
         {
           type: 'reduce',
           fromState: 'close',
           toState: 'SPRITES',
           countArgs: 2,
-          func: (SS, S) =>
-            new Map([['list', [...SS.attr.get('list'), S.attr.get('sprite')]]]),
+          func: updateSpriteList,
         },
       ],
-    },
-    {
-      stateName: 'SPRITE2',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name2' }],
     },
     {
       stateName: 'SPRITE3',
       items: [
         {
           type: 'reduce',
-          fromState: 'name',
+          fromState: 'field',
           toState: 'SPRITES',
           countArgs: 2,
-          func: (S1, S2) =>
-            new Map([['list', [S1.attr.get('sprite'), S2.attr.get('sprite')]]]),
+          func: createSpriteList,
         },
         {
           type: 'reduce',
           fromState: 'close',
           toState: 'SPRITES',
           countArgs: 2,
-          func: (S1, S2) =>
-            new Map([['list', [S1.attr.get('sprite'), S2.attr.get('sprite')]]]),
+          func: createSpriteList,
         },
       ],
     },
     {
-      stateName: 'character1',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name1' }],
+      stateName: 'character',
+      items: [{ type: 'shift', fromState: 'name', toState: 'name' }],
     },
     {
-      stateName: 'character2',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name3' }],
-    },
-    {
-      stateName: 'name1',
+      stateName: 'name',
       items: [
         {
           type: 'reduce',
           fromState: 'character',
           toState: 'CHARACTER',
           countArgs: 2,
-          func: (c, n) => new Map([['char', { name: n.attr.get('val') }]]),
+          func: createCharacterWithoutSprites,
         },
         {
           type: 'reduce',
           fromState: 'end',
           toState: 'CHARACTER',
           countArgs: 2,
-          func: (c, n) => new Map([['char', { name: n.attr.get('val') }]]),
+          func: createCharacterWithoutSprites,
         },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (c, n) => new Map([['char', { name: n.attr.get('val') }]]),
-        },
-        { type: 'shift', fromState: 'open', toState: '{1' },
-      ],
-    },
-    {
-      stateName: 'name2',
-      items: [{ type: 'shift', fromState: 'field', toState: 'field' }],
-    },
-    {
-      stateName: 'name3',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (c, n) => new Map([['char', { name: n.attr.get('val') }]]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 2,
-          func: (c, n) => new Map([['char', { name: n.attr.get('val') }]]),
-        },
-        { type: 'shift', fromState: 'open', toState: '{2' },
+        { type: 'shift', fromState: 'open', toState: '{' },
       ],
     },
     {
@@ -382,7 +185,7 @@ const characterConfig: Config = {
           fromState: 'eof',
           toState: 'MAIN',
           countArgs: 2,
-          func: (CS, e) => new Map([['res', CS.attr.get('list')]]),
+          func: prepareResult,
         },
       ],
     },
@@ -395,83 +198,17 @@ const characterConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: 'name',
+          fromState: 'field',
           toState: 'SPRITE',
-          countArgs: 4,
-          func: (n, f, eq, p) =>
-            new Map([
-              [
-                'sprite',
-                {
-                  //TODO: delete char name from grammar
-                  name: n.attr.get('val'),
-                  field: f.attr.get('val'),
-                  path: p.attr.get('val'),
-                },
-              ],
-            ]),
+          countArgs: 3,
+          func: createSprite,
         },
         {
           type: 'reduce',
           fromState: 'close',
           toState: 'SPRITE',
-          countArgs: 4,
-          func: (n, f, eq, p) =>
-            new Map([
-              [
-                'sprite',
-                {
-                  name: n.attr.get('val'),
-                  field: f.attr.get('val'),
-                  path: p.attr.get('val'),
-                },
-              ],
-            ]),
-        },
-      ],
-    },
-    {
-      stateName: 'text1',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'COMMENT',
-          countArgs: 1,
-          func: t => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'end',
-          toState: 'SPRITE',
           countArgs: 3,
-          func: (n, f, p) => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'SPRITE',
-          countArgs: 3,
-          func: (n, f, p) => new Map(),
-        },
-      ],
-    },
-    {
-      stateName: 'text2',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'COMMENT',
-          countArgs: 1,
-          func: t => new Map(),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'SPRITE',
-          countArgs: 3,
-          func: (n, f, p) => new Map(),
+          func: createSprite,
         },
       ],
     },
@@ -481,84 +218,24 @@ const characterConfig: Config = {
     },
     {
       stateName: '{1',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name2' }],
+      items: [{ type: 'shift', fromState: 'field', toState: 'field' }],
     },
     {
-      stateName: '{2',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name2' }],
-    },
-    {
-      stateName: '}1',
+      stateName: '}',
       items: [
         {
           type: 'reduce',
           fromState: 'character',
           toState: 'CHARACTER',
           countArgs: 5,
-          func: (c, n, op, SS, cl) =>
-            new Map([
-              [
-                'char',
-                { name: n.attr.get('val'), sprites: SS.attr.get('list') },
-              ],
-            ]),
+          func: createCharacter,
         },
         {
           type: 'reduce',
           fromState: 'end',
           toState: 'CHARACTER',
           countArgs: 5,
-          func: (c, n, op, SS, cl) =>
-            new Map([
-              [
-                'char',
-                { name: n.attr.get('val'), sprites: SS.attr.get('list') },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 5,
-          func: (c, n, op, SS, cl) =>
-            new Map([
-              [
-                'char',
-                { name: n.attr.get('val'), sprites: SS.attr.get('list') },
-              ],
-            ]),
-        },
-      ],
-    },
-    {
-      stateName: '}2',
-      items: [
-        {
-          type: 'reduce',
-          fromState: 'character',
-          toState: 'CHARACTER',
-          countArgs: 5,
-          func: (c, n, op, SS, cl) =>
-            new Map([
-              [
-                'char',
-                { name: n.attr.get('val'), sprites: SS.attr.get('list') },
-              ],
-            ]),
-        },
-        {
-          type: 'reduce',
-          fromState: 'text',
-          toState: 'CHARACTER',
-          countArgs: 5,
-          func: (c, n, op, SS, cl) =>
-            new Map([
-              [
-                'char',
-                { name: n.attr.get('val'), sprites: SS.attr.get('list') },
-              ],
-            ]),
+          func: createCharacter,
         },
       ],
     },
@@ -567,87 +244,32 @@ const characterConfig: Config = {
     {
       stateName: 'DOWN',
       items: [
-        { newState: 'MAIN', nameState: 'MAIN' },
+        // { newState: 'MAIN', nameState: 'MAIN' },
         { newState: 'CHARACTERS', nameState: 'CHARACTERS' },
-        { newState: 'CHARACTER', nameState: 'CHARACTER3' },
-        { newState: 'COMMENT', nameState: 'COMMENT4' },
+        { newState: 'CHARACTER', nameState: 'CHARACTER1' },
       ],
     },
     {
       stateName: 'CHARACTERS',
-      items: [
-        { newState: 'CHARACTER', nameState: 'CHARACTER1' },
-        { newState: 'COMMENT', nameState: 'COMMENT2' },
-      ],
+      items: [{ newState: 'CHARACTER', nameState: 'CHARACTER2' }],
     },
     {
       stateName: 'CHARACTER1',
-      items: [{ newState: 'COMMENT', nameState: 'COMMENT1' }],
+      items: [{ newState: 'CHARACTER', nameState: 'CHARACTER3' }],
     },
     {
-      stateName: 'CHARACTER2',
-      items: [{ newState: 'COMMENT', nameState: 'COMMENT1' }],
+      stateName: 'SPRITES',
+      items: [{ newState: 'SPRITE', nameState: 'SPRITE2' }],
     },
     {
-      stateName: 'CHARACTER3',
-      items: [
-        { newState: 'CHARACTER', nameState: 'CHARACTER4' },
-        { newState: 'COMMENT', nameState: 'COMMENT3' },
-      ],
-    },
-    {
-      stateName: 'CHARACTER4',
-      items: [{ newState: 'COMMENT', nameState: 'COMMENT1' }],
-    },
-    {
-      stateName: 'CHARACTER5',
-      items: [{ newState: 'COMMENT', nameState: 'COMMENT5' }],
-    },
-    {
-      stateName: 'COMMENT2',
-      items: [
-        { newState: 'CHARACTER', nameState: 'CHARACTER2' },
-        { newState: 'COMMENT', nameState: 'COMMENT2' },
-      ],
-    },
-    {
-      stateName: 'COMMENT3',
-      items: [
-        { newState: 'CHARACTER', nameState: 'CHARACTER2' },
-        { newState: 'COMMENT', nameState: 'COMMENT2' },
-      ],
-    },
-    {
-      stateName: 'COMMENT4',
-      items: [
-        { newState: 'CHARACTER', nameState: 'CHARACTER5' },
-        { newState: 'COMMENT', nameState: 'COMMENT4' },
-      ],
-    },
-    {
-      stateName: 'SPRITES1',
-      items: [{ newState: 'SPRITE', nameState: 'SPRITE1' }],
-    },
-    {
-      stateName: 'SPRITES2',
-      items: [{ newState: 'SPRITE', nameState: 'SPRITE1' }],
-    },
-    {
-      stateName: 'SPRITE2',
+      stateName: 'SPRITE1',
       items: [{ newState: 'SPRITE', nameState: 'SPRITE3' }],
     },
     {
-      stateName: '{1',
+      stateName: '{',
       items: [
-        { newState: 'SPRITES', nameState: 'SPRITES1' },
-        { newState: 'SPRITE', nameState: 'SPRITE2' },
-      ],
-    },
-    {
-      stateName: '{2',
-      items: [
-        { newState: 'SPRITES', nameState: 'SPRITES2' },
-        { newState: 'SPRITE', nameState: 'SPRITE2' },
+        { newState: 'SPRITES', nameState: 'SPRITES' },
+        { newState: 'SPRITE', nameState: 'SPRITE1' },
       ],
     },
   ],
