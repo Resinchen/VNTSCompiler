@@ -25,7 +25,7 @@ const prepareResult: ReduceFunc = (CS, e) =>
 
 const characterConfig: Config = {
   patterns: [
-    { regex: /^[ \n\t]+/, tag: 'None', hasLexVal: false },
+    { regex: /^[ \n\t\r]+/, tag: 'None', hasLexVal: false },
     { regex: /^{/, tag: 'open', hasLexVal: false },
     { regex: /^}/, tag: 'close', hasLexVal: false },
     { regex: /^=/, tag: 'equals', hasLexVal: false },
@@ -33,7 +33,6 @@ const characterConfig: Config = {
     { regex: /^### End of defines ###/, tag: 'end', hasLexVal: false },
     { regex: /^playerName/, tag: 'name', hasLexVal: true },
 
-    { regex: /^\.[\w]*/, tag: 'field', hasLexVal: true },
     { regex: /^#[\w\d ]*#/, tag: 'None', hasLexVal: false },
     { regex: /^"[\w\d./\\]*"/, tag: 'path', hasLexVal: true },
 
@@ -100,20 +99,20 @@ const characterConfig: Config = {
     {
       stateName: 'SPRITES',
       items: [
-        { type: 'shift', fromState: 'field', toState: 'field' },
+        { type: 'shift', fromState: 'name', toState: 'field' },
         { type: 'shift', fromState: 'close', toState: '}' },
       ],
     },
     {
       stateName: 'SPRITES',
       items: [
-        { type: 'shift', fromState: 'field', toState: 'field' },
+        { type: 'shift', fromState: 'name', toState: 'field' },
         { type: 'shift', fromState: 'close', toState: '}' },
       ],
     },
     {
       stateName: 'SPRITE1',
-      items: [{ type: 'shift', fromState: 'field', toState: 'field' }],
+      items: [{ type: 'shift', fromState: 'name', toState: 'field' }],
     },
     {
       stateName: 'SPRITE2',
@@ -198,7 +197,7 @@ const characterConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: 'field',
+          fromState: 'name',
           toState: 'SPRITE',
           countArgs: 3,
           func: createSprite,
@@ -217,8 +216,8 @@ const characterConfig: Config = {
       items: [{ type: 'shift', fromState: 'path', toState: 'path' }],
     },
     {
-      stateName: '{1',
-      items: [{ type: 'shift', fromState: 'field', toState: 'field' }],
+      stateName: '{',
+      items: [{ type: 'shift', fromState: 'name', toState: 'field' }],
     },
     {
       stateName: '}',
@@ -244,7 +243,7 @@ const characterConfig: Config = {
     {
       stateName: 'DOWN',
       items: [
-        // { newState: 'MAIN', nameState: 'MAIN' },
+        { newState: 'MAIN', nameState: 'MAIN' },
         { newState: 'CHARACTERS', nameState: 'CHARACTERS' },
         { newState: 'CHARACTER', nameState: 'CHARACTER1' },
       ],
