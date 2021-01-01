@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "webpack",
-    "start": "npm run build & node public/bundle.js"
+    "build": "tsc & webpack",
+    "start": "npm run build & node public/bundle.js",
+    "tsc-debug": "tsc & node lib/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "fs": "0.0.1-security",
     "prettier": "^2.2.1",
     "ts-loader": "^8.0.11",
     "ts-node": "^9.0.0",
