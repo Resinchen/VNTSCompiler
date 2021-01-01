@@ -1,5 +1,17 @@
 import { Config, ReduceFunc } from '../@types/config'
+import Choice, { Effect, Variant } from '../gameObjects/actions/choice'
+import Jump from '../gameObjects/actions/jump'
+import LoadScene from '../gameObjects/actions/loadscene'
+import Mark from '../gameObjects/actions/mark'
+import Phrase, { Options } from '../gameObjects/actions/phrase'
+import Play, { PlayType } from '../gameObjects/actions/play'
+import Set, { SetType } from '../gameObjects/actions/set'
+import Varle, {
+  CompositeCondition,
+  SimpleCondition,
+} from '../gameObjects/actions/varle'
 import CharacterLink from '../gameObjects/characterLink'
+import File from '../gameObjects/file'
 
 const prepareResult: ReduceFunc = (LL, AL) =>
   new Map([
@@ -52,144 +64,149 @@ const createLoad: ReduceFunc = (l, W) =>
     ['file', W.attr.get('file')],
   ])
 const createSet: ReduceFunc = (s, W) =>
-  new Map([['set', { type: W.attr.get('type'), payload: W.attr.get('info') }]])
+  new Map([['set', new Set(W.attr.get('type'), W.attr.get('info'))]])
 const createPlay: ReduceFunc = (p, W) =>
-  new Map([['play', { type: W.attr.get('type'), payload: W.attr.get('info') }]])
+  new Map([['play', new Play(W.attr.get('type'), W.attr.get('info'))]])
 const createPhrase: ReduceFunc = (l, O, s, w) =>
   new Map([
     [
       'phrase',
-      {
-        label: l.attr.get('val'),
-        option: O.attr.get('opt'),
-        words: w.attr.get('val'),
-      },
+      new Phrase(l.attr.get('val'), w.attr.get('val'), O.attr.get('opt')),
     ],
   ])
 const createPhraseWithoutOptions: ReduceFunc = (l, s, w) =>
-  new Map([
-    [
-      'phrase',
-      { label: l.attr.get('val'), emotion: null, words: w.attr.get('val') },
-    ],
-  ])
+  new Map([['phrase', new Phrase(l.attr.get('val'), w.attr.get('val'))]])
 const createChoice: ReduceFunc = (P, V) =>
-  new Map([
-    [
-      'choice',
-      { question: P.attr.get('phrase'), variants: V.attr.get('list') },
-    ],
-  ])
+  new Map([['choice', new Choice(P.attr.get('phrase'), V.attr.get('list'))]])
 const createVarle: ReduceFunc = (i, C, J) =>
-  new Map([
-    ['varle', { condition: C.attr.get('value'), target: J.attr.get('jump') }],
-  ])
+  new Map([['varle', new Varle(C.attr.get('boollist'), J.attr.get('jump'))]])
 const createJump: ReduceFunc = (j, mn) =>
-  new Map([
-    ['jump', { name: 'make_jump', payload: { mark_name: mn.attr.get('val') } }],
-  ])
+  new Map([['jump', new Jump(mn.attr.get('val'))]])
 const createMark: ReduceFunc = (m, mn) =>
-  new Map([
-    [
-      'mark',
-      { name: 'create_mark', payload: { mark_name: mn.attr.get('val') } },
-    ],
-  ])
+  new Map([['mark', new Mark(mn.attr.get('val'))]])
 const createLoadscene: ReduceFunc = (l, p) =>
-  new Map([['path', p.attr.get('val')]])
+  new Map([['next_scene', new LoadScene(p.attr.get('val'))]])
 
 const createVarlist: ReduceFunc = V =>
   new Map([['list', [V.attr.get('variant')]]])
 const updateVarlist: ReduceFunc = (VL, s, V) =>
   new Map([['list', [...VL.attr.get('list'), V.attr.get('variant')]]])
 
-const createVariants: ReduceFunc = (op, V1, s, V2, cl) =>
-  new Map([['list', [V1.attr.get('variant'), V2.attr.get('variant')]]])
+const createVariants: ReduceFunc = (op, VL, cl) =>
+  new Map([['list', VL.attr.get('list')]])
 const createVariantSingleEffect: ReduceFunc = (w, s, E) =>
-  new Map([
-    ['variant', { value: w.attr.get('val'), effect: E.attr.get('effect') }],
-  ])
+  new Map([['variant', new Variant(w.attr.get('val'), [E.attr.get('effect')])]])
 const createVariantMultiEffect: ReduceFunc = (w, s, EL) =>
-  new Map([
-    ['variant', { text: w.attr.get('val'), effects: EL.attr.get('list') }],
-  ])
+  new Map([['variant', new Variant(w.attr.get('val'), EL.attr.get('list'))]])
 
 const createEffectlist: ReduceFunc = (E1, c, E2) =>
   new Map([['list', [E1.attr.get('effect'), E2.attr.get('effect')]]])
 const createEffectFlag: ReduceFunc = (f, e, b) =>
   new Map([
-    [
-      'effect',
-      { name: 'set_flag', value: [f.attr.get('val'), b.attr.get('val')] },
-    ],
+    ['effect', new Effect('set_flag', f.attr.get('val'), b.attr.get('val'))],
   ])
 const createEffectCounter: ReduceFunc = (cn, op, d) =>
   new Map([
     [
       'effect',
-      {
-        name: 'change_counter',
-        value: [cn.attr.get('val'), op.attr.get('val'), d.attr.get('val')],
-      },
+      new Effect(
+        'change_counter',
+        cn.attr.get('val'),
+        d.attr.get('val'),
+        op.attr.get('val')
+      ),
     ],
   ])
 
 const createOptionsPosition: ReduceFunc = (o, p, c) =>
-  new Map([['opt', { pos: p.attr.get('val'), em: null }]])
+  new Map([['opt', new Options(p.attr.get('val'))]])
 const createOptionsEmotion: ReduceFunc = (o, e, c) =>
-  new Map([['opt', { pos: null, em: e.attr.get('val') }]])
+  new Map([['opt', new Options(undefined, e.attr.get('val'))]])
 const createOptionsPositionAndEmotion: ReduceFunc = (o, p, c, e, cl) =>
-  new Map([['opt', { pos: p.attr.get('val'), em: e.attr.get('val') }]])
+  new Map([['opt', new Options(p.attr.get('val'), e.attr.get('val'))]])
 
 const createConditionCounter: ReduceFunc = (cn, bo, d) =>
   new Map([
     [
-      'value',
-      {
-        counter: cn.attr.get('val'),
-        op: bo.attr.get('val'),
-        digit: d.attr.get('val'),
-      },
+      'boollist',
+      new SimpleCondition(
+        'check_counter',
+        cn.attr.get('val'),
+        bo.attr.get('val'),
+        d.attr.get('val')
+      ),
     ],
   ])
 const createConditionFlag: ReduceFunc = (f, i, b) =>
-  new Map([['value', { flag: f.attr.get('val'), bool: b.attr.get('val') }]])
-const createConditionAnd: ReduceFunc = (C1, a, C2) => new Map([])
-const createConditionOr: ReduceFunc = (C1, o, C2) => new Map([])
-const createConditionNot: ReduceFunc = (n, C) => new Map([])
+  new Map([
+    [
+      'boollist',
+      new SimpleCondition(
+        'check_flag',
+        f.attr.get('val'),
+        'is',
+        b.attr.get('val')
+      ),
+    ],
+  ])
+const createConditionAnd: ReduceFunc = (C1, a, C2) =>
+  new Map([
+    [
+      'boollist',
+      new CompositeCondition(
+        C1.attr.get('boollist'),
+        'and',
+        C2.attr.get('boollist')
+      ),
+    ],
+  ])
+const createConditionOr: ReduceFunc = (C1, o, C2) =>
+  new Map([
+    [
+      'boollist',
+      new CompositeCondition(
+        C1.attr.get('boollist'),
+        'or',
+        C2.attr.get('boollist')
+      ),
+    ],
+  ])
+const createConditionNot: ReduceFunc = (n, C) =>
+  new Map([
+    [
+      'boollist',
+      new CompositeCondition(undefined, 'not', C.attr.get('boollist')),
+    ],
+  ])
 
 const createSetBackground: ReduceFunc = (b, n) =>
   new Map([
-    ['type', 'background'],
+    ['type', SetType.Background],
     ['info', n.attr.get('val')],
   ])
 const createSetText: ReduceFunc = (t, w) =>
   new Map([
-    ['type', 'text'],
+    ['type', SetType.Text],
     ['info', w.attr.get('val')],
   ])
-const createSetBlackout: ReduceFunc = b =>
-  new Map([
-    ['type', 'blackout'],
-    ['info', null],
-  ])
+const createSetBlackout: ReduceFunc = b => new Map([['type', SetType.Blackout]])
 
 const createPlaySound: ReduceFunc = (s, n) =>
   new Map([
-    ['type', 'sound'],
+    ['type', PlayType.Sound],
     ['info', n.attr.get('val')],
   ])
 
 const createLoadCharacter: ReduceFunc = (c, n, s, l) =>
   new Map([['char', new CharacterLink(n.attr.get('val'), l.attr.get('val'))]])
 const createLoadImage: ReduceFunc = (s, p) =>
-  new Map([['file', { type: 'image', payload: p.attr.get('val') }]])
+  new Map([['file', new File('image', p.attr.get('val'))]])
 const createLoadSound: ReduceFunc = (s, p) =>
-  new Map([['file', { type: 'sound', payload: p.attr.get('val') }]])
+  new Map([['file', new File('sound', p.attr.get('val'))]])
 
 const sceneConfig: Config = {
   patterns: [
-    { regex: /^[ \n\t]+/, tag: 'None', hasLexVal: false },
+    { regex: /^[ \n\t\r]+/, tag: 'None', hasLexVal: false },
     { regex: /^#[\w\d ]*#/, tag: 'None', hasLexVal: false },
     { regex: /^load_scene/, tag: 'load_scene', hasLexVal: false },
     { regex: /^load/, tag: 'load', hasLexVal: false },
@@ -205,6 +222,9 @@ const sceneConfig: Config = {
     { regex: /^(left|center|right)/, tag: 'position', hasLexVal: true },
     { regex: /^mark[^_]/, tag: 'mark', hasLexVal: false },
     { regex: /^if/, tag: 'if', hasLexVal: false },
+    { regex: /^and/, tag: 'and', hasLexVal: false },
+    { regex: /^or/, tag: 'or', hasLexVal: false },
+    { regex: /^not/, tag: 'not', hasLexVal: false },
     { regex: /^is/, tag: 'is', hasLexVal: false },
     { regex: /^:/, tag: 'colon', hasLexVal: false },
     { regex: /^{/, tag: 'curly_brackets_open', hasLexVal: false },
@@ -215,16 +235,15 @@ const sceneConfig: Config = {
     { regex: /^,/, tag: 'comma', hasLexVal: false },
     { regex: /^=/, tag: 'equals', hasLexVal: false },
     { regex: /^([0-9]|[1-9][0-9]+)/, tag: 'digit', hasLexVal: true },
-    { regex: /^\([\w]+\)/, tag: 'emotion', hasLexVal: true },
     { regex: /^(-|\+)/, tag: 'digit_op', hasLexVal: true },
     { regex: /^(true|false)/, tag: 'bool', hasLexVal: true },
     { regex: /^[<|>]=?/, tag: 'bool_op', hasLexVal: true },
     { regex: /^mark_[_\w]+/, tag: 'mark_name', hasLexVal: true },
     { regex: /^counter_[_\w]+/, tag: 'counter_name', hasLexVal: true },
     { regex: /^flag_[_\w]+/, tag: 'flag_name', hasLexVal: true },
-    { regex: /^\"\w[\w\d\./\\]+\"/, tag: 'path', hasLexVal: true },
+    { regex: /^\'\w[\w\d\./\\]+\'/, tag: 'path', hasLexVal: true },
     { regex: /^\"[ \.\,\-\!\?\w\d{}<>/`]*\"/, tag: 'words', hasLexVal: true },
-    { regex: /^\w[_\w]+/, tag: 'name', hasLexVal: true },
+    { regex: /^\w[_\w]+/, tag: 'word', hasLexVal: true },
     { regex: /^\w/, tag: 'label', hasLexVal: true },
   ],
   action: [
@@ -1394,6 +1413,13 @@ const sceneConfig: Config = {
           countArgs: 1,
           func: createVarlist,
         },
+        {
+          type: 'reduce',
+          fromState: 'semicolon',
+          toState: 'VARLIST',
+          countArgs: 1,
+          func: createVarlist,
+        },
       ],
     },
     {
@@ -1418,6 +1444,13 @@ const sceneConfig: Config = {
           countArgs: 3,
           func: createVariantSingleEffect,
         },
+        {
+          type: 'reduce',
+          fromState: 'semicolon',
+          toState: 'VAR',
+          countArgs: 3,
+          func: createVariantSingleEffect,
+        },
         { type: 'shift', fromState: 'comma', toState: ',2' },
       ],
     },
@@ -1431,6 +1464,13 @@ const sceneConfig: Config = {
           countArgs: 3,
           func: createEffectlist,
         },
+        {
+          type: 'reduce',
+          fromState: 'semicolon',
+          toState: 'EFFLIST',
+          countArgs: 3,
+          func: createEffectlist,
+        },
       ],
     },
     {
@@ -1439,6 +1479,13 @@ const sceneConfig: Config = {
         {
           type: 'reduce',
           fromState: 'curly_brackets_close',
+          toState: 'VAR',
+          countArgs: 3,
+          func: createVariantMultiEffect,
+        },
+        {
+          type: 'reduce',
+          fromState: 'semicolon',
           toState: 'VAR',
           countArgs: 3,
           func: createVariantMultiEffect,
@@ -1540,7 +1587,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: 'OPTIONS',
-      items: [{ type: 'shift', fromState: ':', toState: ':2' }],
+      items: [{ type: 'shift', fromState: 'colon', toState: ':2' }],
     },
     {
       stateName: 'VARLIST',
@@ -1559,7 +1606,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: 'character',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name1' }],
+      items: [{ type: 'shift', fromState: 'word', toState: 'name1' }],
     },
     {
       stateName: 'name1',
@@ -1967,7 +2014,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: 'sound2',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name3' }],
+      items: [{ type: 'shift', fromState: 'word', toState: 'name3' }],
     },
     {
       stateName: 'set',
@@ -1979,7 +2026,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: 'background',
-      items: [{ type: 'shift', fromState: 'name', toState: 'name2' }],
+      items: [{ type: 'shift', fromState: 'word', toState: 'name2' }],
     },
     {
       stateName: 'text',
@@ -2254,7 +2301,7 @@ const sceneConfig: Config = {
     {
       stateName: 'position',
       items: [
-        { type: 'shift', fromState: 'comma', toState: ',2' },
+        { type: 'shift', fromState: 'comma', toState: ',1' },
         { type: 'shift', fromState: 'brackets_close', toState: ')1' },
       ],
     },
@@ -2268,7 +2315,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: '{',
-      items: [{ type: 'shift', fromState: 'words', toState: 'words1' }],
+      items: [{ type: 'shift', fromState: 'words', toState: 'words4' }],
     },
     {
       stateName: ';',
@@ -2281,56 +2328,56 @@ const sceneConfig: Config = {
           type: 'reduce',
           fromState: 'label',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'set',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'play',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'if',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'jump',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'mark',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'load_scene',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
         {
           type: 'reduce',
           fromState: 'eof',
           toState: 'VARS',
-          countArgs: 5,
+          countArgs: 3,
           func: createVariants,
         },
       ],
@@ -2353,6 +2400,13 @@ const sceneConfig: Config = {
         {
           type: 'reduce',
           fromState: 'curly_brackets_close',
+          toState: 'EFF',
+          countArgs: 3,
+          func: createEffectFlag,
+        },
+        {
+          type: 'reduce',
+          fromState: 'semicolon',
           toState: 'EFF',
           countArgs: 3,
           func: createEffectFlag,
@@ -2423,6 +2477,13 @@ const sceneConfig: Config = {
         },
         {
           type: 'reduce',
+          fromState: 'semicolon',
+          toState: 'EFF',
+          countArgs: 3,
+          func: createEffectCounter,
+        },
+        {
+          type: 'reduce',
           fromState: 'comma',
           toState: 'EFF',
           countArgs: 3,
@@ -2465,7 +2526,7 @@ const sceneConfig: Config = {
     },
     {
       stateName: ',1',
-      items: [{ type: 'shift', fromState: 'emotion', toState: 'emotion2' }],
+      items: [{ type: 'shift', fromState: 'word', toState: 'emotion2' }],
     },
     {
       stateName: ',2',
@@ -2495,7 +2556,7 @@ const sceneConfig: Config = {
       items: [{ type: 'shift', fromState: 'mark_name', toState: 'mark_name2' }],
     },
     {
-      stateName: 'mark_name1',
+      stateName: 'mark_name2',
       items: [
         {
           type: 'reduce',
@@ -2556,7 +2617,7 @@ const sceneConfig: Config = {
       ],
     },
     {
-      stateName: 'mark_name2',
+      stateName: 'mark_name1',
       items: [
         {
           type: 'reduce',
@@ -2648,7 +2709,7 @@ const sceneConfig: Config = {
       stateName: '(',
       items: [
         { type: 'shift', fromState: 'position', toState: 'position' },
-        { type: 'shift', fromState: 'emotion', toState: 'emotion1' },
+        { type: 'shift', fromState: 'word', toState: 'emotion1' },
       ],
     },
     {
@@ -2656,7 +2717,7 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: ':',
+          fromState: 'colon',
           toState: 'OPTIONS',
           countArgs: 3,
           func: createOptionsPosition,
@@ -2668,7 +2729,7 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: ':',
+          fromState: 'colon',
           toState: 'OPTIONS',
           countArgs: 3,
           func: createOptionsEmotion,
@@ -2680,7 +2741,7 @@ const sceneConfig: Config = {
       items: [
         {
           type: 'reduce',
-          fromState: ':',
+          fromState: 'colon',
           toState: 'OPTIONS',
           countArgs: 5,
           func: createOptionsPositionAndEmotion,
@@ -2697,7 +2758,7 @@ const sceneConfig: Config = {
     {
       stateName: 'DOWN',
       items: [
-        // { newState: 'MAIN', nameState: 'MAIN' },
+        { newState: 'MAIN', nameState: 'MAIN' },
         { newState: 'LOADLIST', nameState: 'LOADLIST' },
         { newState: 'LOAD', nameState: 'LOAD1' },
       ],
@@ -2761,6 +2822,10 @@ const sceneConfig: Config = {
         { newState: 'EFFLIST', nameState: 'EFFLIST' },
       ],
     },
+    {
+      stateName: 'label1',
+      items: [{ newState: 'OPTIONS', nameState: 'OPTIONS' }],
+    },
     { stateName: 'set', items: [{ newState: 'WHSET', nameState: 'WHSET' }] },
     { stateName: 'play', items: [{ newState: 'WHPLAY', nameState: 'WHPLAY' }] },
     {
@@ -2771,7 +2836,7 @@ const sceneConfig: Config = {
       ],
     },
     { stateName: ';', items: [{ newState: 'VAR', nameState: 'VAR2' }] },
-    { stateName: ',', items: [{ newState: 'EFF', nameState: 'EFF2' }] },
+    { stateName: ',2', items: [{ newState: 'EFF', nameState: 'EFF2' }] },
     { stateName: 'if', items: [{ newState: 'COND', nameState: 'COND1' }] },
     { stateName: 'and', items: [{ newState: 'COND', nameState: 'COND2' }] },
     { stateName: 'or', items: [{ newState: 'COND', nameState: 'COND3' }] },
