@@ -5,7 +5,10 @@ export enum PlayType {
 }
 
 export default class Play extends Action {
-  constructor(readonly playType: PlayType, readonly payload: string) {
+  public payload: string
+
+  constructor(readonly playType: PlayType, whatPlay: string) {
     super(ActionType.Play)
+    this.payload = whatPlay
   }
 }

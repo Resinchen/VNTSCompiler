@@ -7,7 +7,9 @@ export enum SetType {
 }
 
 export default class Set extends Action {
-  constructor(readonly setType: SetType, readonly payload?: string) {
+  public payload?: string
+  constructor(readonly setType: SetType, whatSet?: string) {
     super(ActionType.Set)
+    this.payload = whatSet
   }
 }

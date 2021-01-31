@@ -10,5 +10,5 @@ export enum ActionType {
 }
 
 export default class Action {
-  constructor(protected type: ActionType) {}
+  constructor(readonly type: ActionType) {}
 }
