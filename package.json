@@ -2,15 +2,25 @@
   "name": "vntscompiler",
   "version": "1.0.2",
   "description": "compiler for visual novel language",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Resinchen/VNTSCompiler.git"
+  },
   "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "types": "lib",
   "scripts": {
     "build": "tsc & webpack",
     "start": "npm run build & node public/bundle.js",
     "tsc-debug": "tsc & node lib/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "Alexander Chernetsov",
+    "email": "alex1410alex@gmail.com"
+  },
+  "files": [
+    "lib"
+  ],
   "license": "ISC",
   "devDependencies": {
     "fs": "0.0.1-security",
