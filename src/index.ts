@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, writeFileSync } from 'fs'
 import { basename, join } from 'path'
-import LRParser from '../node_modules/lrparser-vnts/lib/index'
+import LRParser from 'lrparser-vnts'
 import Builder from './builder'
 import characterConfig from './configs/characterConfig'
 import sceneConfig from './configs/sceneConfig'
