@@ -1,0 +1,28 @@
+# Required player character # Character PlayerName { sadly = "sprites/gg/sadly.png" happy = "sprites/gg/happy.png" } # Another characters # Character Mary { concerned = "sprites/mary/concerned.png" happy = "sprites/mary/happy.png" } # Another characters without sprites # Character Sister ### End of defines ###
+/TOKENIZE/
+Character PlayerName { sadly = "sprites/gg/sadly.png" happy = "sprites/gg/happy.png" } Character Mary { concerned = "sprites/mary/concerned.png" happy = "sprites/mary/happy.png" } Character Sister ### End of defines ###
+Character NAME { FIELD = PATH FIELD = PATH } Character NAME { FIELD = PATH FIELD = PATH } Character NAME END
+				 [S.s = (f, p)]
+Character NAME { SPRITE FIELD = PATH } Character NAME { FIELD = PATH FIELD = PATH } Character NAME END
+                        [S.s = (f, p)]
+Character NAME { SPRITE SPRITE } Character NAME { FIELD = PATH FIELD = PATH } Character NAME END
+                 [SS.list = (S1.s, S2.s)]
+Character NAME { SPRITELIST } Character NAME { FIELD = PATH FIELD = PATH } Character NAME END
+[CH.char = (n, ss)]
+CHAR Character NAME { FIELD = PATH FIELD = PATH } Character NAME END
+                      [S.s = (f, p)]
+CHAR Character NAME { SPRITE FIELD = PATH } Character NAME END
+                             [S.s = (f, p)]
+CHAR Character NAME { SPRITE SPRITE } Character NAME END
+                      [SS.list = <S1.s, S2.s>]
+CHAR Character NAME { SPRITELIST } Character NAME END
+     [CH.char = (n, ss)]
+CHAR CHAR Character NAME END
+[CHS.list = <CH1.char, CH2.char>]
+CHARLIST Character NAME END
+         [CH.char = (n)]
+CHARLIST CHAR END
+[CHS.list = <CHS.list, CH.char>]
+CHARLIST END
+[MAIN.res = CHS.list]
+MAIN

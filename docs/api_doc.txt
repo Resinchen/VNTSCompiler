@@ -1,0 +1,36 @@
+GET api/games - get all games
+GET api/games/:id - get Game by id
+
+POST api/games - add new Game
+
+PATCH api/games/:id - update Game by id
+
+DELETE api/games/:id - remove Game by id
+
+GET api/games?title=[kw] - find all Game which title contains 'kw'
+GET api/games?title=[]&author=[]&tags[]=[] - finders
+GET api/games?title=[]&createdDate=[]&countPlayers=[] - sorter
+
+
+==============EDITOR===================
+
+GET api/editor/games/?owner=<owner_name> - get all games by owner
+GET api/editor/games/:id/?owner=<owner_name> - get game detail by id
+
+POST api/editor/games - add new game
+POST api/editor/files - work with file game
+DELETE api/editor/files/:id - delete file by id
+
+GET api/editor/script/:id - get script fle by id
+PATCH api/editor/script/:id - update script fle by id
+
+PUT api/editor/games/:id?owner=<owner_name> - update game by id
+request.body = {
+	... some name field
+	array_data: {
+		...some array fields
+	}
+}
+
+
+DELETE api/editor/games/:id?owner=<owner_name> - delete game by id

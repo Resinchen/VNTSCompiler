@@ -1,0 +1,16 @@
+LoginPage
+RegisterPage
+----------------
+DashboardPage
+GamePage
+AccountPage
+----------------
+AddGamePage
+EditFilesPage
+EditScriptPage
+EditUserPage
+================
+
+Login --> Dashboard --> GamePage --> EditFiles
+      |             |-> AddGame  |-> EditScript
+      |-> Account --> EditUser

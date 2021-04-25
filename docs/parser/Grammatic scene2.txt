@@ -1,0 +1,339 @@
+1) MAIN -> LOADLIST ACTIONLIST [M.files = LL.files; M.chars = LL.chars; M.actions = AL.actions]
+
+2) LOADLIST -> LOAD LOAD [LL.chars = <L1.char, L2.char>; LL.files = <L1.file, L2.file>]
+3) LOADLIST -> LOADLIST LOAD [LL.chars = <LL1.chars, L.char>; LL.files = <LL1.files, L.file>]
+
+4) ACTIONLIST -> ACTION ACTION [ACTION1.action.id = 1; ACTION2.action.id = 2; ACTIONLIST.inc = 2; ACTIONLIST.list = <ACTION1.action, ACTION2.action>]
+5) ACTIONLIST -> ACTIONLIST ACTION [ACTIONLIST.inc = ACTIONLIST.inc + 1; ACTION.action.id = ACTIONLIST.inc; ACTIONLIST.list = <ACTIONLIST1.list, ACTION.action>]
+
+6) ACTION -> SET [A.action = S.set]
+7) ACTION -> PLAY [A.action = P.play]
+8) ACTION -> PHR [A.action = P.phrase]
+9) ACTION -> PHRWE [A.action = P.phrase]
+10) ACTION -> CHOICE [A.action = C.choice]
+11) ACTION -> VARLE [A.action = V.varle]
+12) ACTION -> JUMP [A.action = J.jump]
+13) ACTION -> MARK [A.action = M.mark]
+14) ACTION -> LOADSCENE [A.action = L.next_scene]
+
+15) LOAD -> load WHLOAD [L.char = WL.char; L.file = WL.file]
+16) WHLOAD -> character name : label [WL.char = (n.lexval, l.lexval); WL.file = None]
+17) WHLOAD -> image path [WL.char = None; WL.file = (image, p.lexval)]
+18) WHLOAD -> sound path [WL.char = None; WL.file = (sound, p.lexval)]
+
+19) SET -> set WHSET [S.set = (type:set, W.type, W.info)]
+20) WHSET -> background name [W.type = background; W.info = n.lexval]
+21) WHSET -> text words [W.type = text; W.info = t.lexval]
+22) WHSET -> blackout [W.type = blackout; W.info = None]
+
+23) PLAY -> play WHPLAY [P.play = (type:play, W.type, W.info)]
+24) WHPLAY -> sound name [W.type = sound; W.info = n.lexval]
+
+25) PHR -> label OPTIONS : words [PHR.phrase = (type:phr, l.lexval, O.opt, t.lexval)]
+
+26) OPTIONS -> ( position , emotion ) [O.opt = (pos:p.lexval, em:e.lexval)]
+27) OPTIONS -> ( emotion ) [O.opt = (pos:None, em:e.lexval)]
+28) OPTIONS -> ( position ) [O.opt = (pos:p.lexval, em:None)]
+
+29) PHRWE -> label : words [P.phrase = (type:phr, l.lexval, None, t.lexval)]
+
+30) CHOICE -> PHR VARS [C.choice = (type:choice, P.phrase, V.list)]
+31) CHOICE -> PHRWE VARS [C.choice = (type:choice, P.phrase, V.list)]
+
+32) VARS -> { VARLIST } [V.list = VL.list]
+33) VARLIST -> VARLIST ; VAR [VL.list = <VL1.list, V.variant>]
+34) VARLIST -> VAR [VL.list = <V.variant>]
+35) VAR -> words : EFF [V.variant = {value: w.lexval, effects: <E.effect>}]
+36) VAR -> words : EFFLIST [V.variant = {value: w.lexval, effects: EL.list}]
+37) EFF -> flag_name = bool [E.effect = {type: 'set_flag', target: f.lexval, value: b.lexval}]
+38) EFF -> counter_name digit_operation digit [E.effect = {type: 'change_counter', target: c.lexval, op: do.lexval, value: d.lexval}]
+39) EFFLIST -> EFF , EFF [EL.list = <E1.effect, E2.effect>]
+
+40) VARLE -> if COND JUMP [V.varle = (type:varle, C.boollist, J.jump)]
+
+41) COND -> COND and COND [COND.boollist = {left_list: C1.boollist; op: 'and' right_list: C2.boollist}] 
+42) COND -> COND or COND [COND.boollist = {left_list: C1.boollist; op: 'or' right_list: C2.boollist}] 
+43) COND -> not COND [COND.boollist = {left_list: null; op: 'not' right_list: C1.boollist}]
+
+44) COND -> flag_name is bool [COND.boollist = {type: 'check_flag', target: f.lexval, op: 'is', value: b.lexval}]
+45) COND -> counter_name bool_operation digit [COND.boollist = {type: 'check_counter', target: c.lexval, op: bo.lexval, value: d.lexval}]
+
+46) JUMP -> jump mark_name [J.jump = (type:jump, mn.lexval)]
+
+47) MARK -> mark mark_name [M.mark = (type:mark, mn.lexval)]
+
+48) LOADSCENE -> load_scene path [LS.loadscene = (type:loadscene, p.lexval)]
+
+
+path = "\w[\w\d\./\\]+"
+label= \w
+words = "[ \.\,\-\!\?\w\d{}<>/`]*"
+digit = [1-9][0-9]+
+bool = true|false
+position = left|center|right
+mark_name = mark_[\w]+
+bool_operation = [<|>]=?
+counter_name = counter_[\w]+
+flag_name = flag_[\w]+
+digit_operation = -|\+
+name = \w[_\w]+
+emotion = (\w+)
+
+----------------------------------------
+1) MAIN -> LOADLIST ACTIONLIST 
+<
+	files = LL.files
+	chars = LL.chars
+	actions = AL.actions
+>
+
+2) LOADLIST -> LOAD LOAD 
+<
+	chars = [L1.char, L2.char] 
+	files = [L1.file, L2.file]
+>
+
+3) LOADLIST -> LOADLIST LOAD 
+<
+	chars = [LL1.chars, L.char]
+	files = [LL1.files, L.file]
+>
+
+4) ACTIONLIST -> ACTION ACTION 
+<
+	ACTION1.action.id = 1
+	ACTION2.action.id = 2
+	inc = 2
+	list = [ACTION1.action, ACTION2.action]
+>
+
+
+5) ACTIONLIST -> ACTIONLIST ACTION 
+<
+	inc = ACTIONLIST1.inc + 1
+	ACTION.action.id = ACTIONLIST.inc
+	list = [ACTIONLIST1.list, ACTION.action]
+>
+
+6) ACTION -> SET 
+<
+	action = S.set
+>
+
+7) ACTION -> PLAY
+<
+	action = P.play
+>
+
+8) ACTION -> PHR
+ <
+ 	action = P.phrase
+ >
+
+9) ACTION -> PHRWE
+ <
+ 	action = P.phrase
+ >
+
+10) ACTION -> CHOICE
+<
+	action = C.choice
+>
+
+11) ACTION -> VARLE
+<
+	action = V.varle
+>
+
+12) ACTION -> JUMP
+<
+	action = J.jump
+>
+
+13) ACTION -> MARK
+<
+	action = M.mark
+>
+
+14) ACTION -> LOADSCENE
+<
+	action = L.next_scene
+>
+
+15) LOAD -> load WHLOAD
+<
+	char = WL.char
+	file = WL.file
+>
+
+16) WHLOAD -> character name : label 
+<
+	char = (n.lexval, l.lexval)
+>
+
+17) WHLOAD -> image path 
+<
+	file = (image, p.lexval)
+>
+
+18) WHLOAD -> sound path 
+<
+	file = (sound, p.lexval)
+>
+
+19) SET -> set WHSET 
+<
+	set = (type:set, W.type, W.payload)
+>
+
+20) WHSET -> background name 
+<
+	type = background
+	payload = n.lexval
+>
+
+21) WHSET -> text words 
+<
+	type = text
+	payload = t.lexval
+>
+
+22) WHSET -> blackout 
+<
+	type = blackout
+>
+
+23) PLAY -> play WHPLAY 
+<
+	play = (type:play, W.type, W.payload)
+>
+
+24) WHPLAY -> sound name 
+<
+	type = sound
+	payload = n.lexval
+>
+
+25) PHR -> label OPTIONS : words
+<
+	phrase = (type:phr, l.lexval, O.opt, t.lexval)
+>
+
+26) OPTIONS -> ( position , emotion ) 
+<
+	opt = (pos:p.lexval, em:e.lexval)
+>
+
+27) OPTIONS -> ( emotion )
+<
+	opt = (em:e.lexval)
+>
+
+28) OPTIONS -> ( position )
+<
+	opt = (pos:p.lexval)
+>
+
+29) PHRWE -> label : words
+<
+	phrase = (type:phr, l.lexval, None, t.lexval)
+>
+
+30) CHOICE -> PHR VARS 
+<
+	choice = (type:choice, P.phrase, V.list)
+>
+
+31) CHOICE -> PHRWE VARS 
+<
+	choice = (type:choice, P.phrase, V.list)
+>
+
+32) VARS -> { VARLIST } 
+<
+	list = VL.list
+>
+
+33) VARLIST -> VARLIST ; VAR 
+<
+	list = [VL1.list, V.variant]
+>
+
+34) VARLIST -> VAR 
+<
+	list = [V.variant]
+>
+
+35) VAR -> words : EFF 
+<
+	variant = {value: w.lexval, effects: [E.effect]}
+>
+
+36) VAR -> words : EFFLIST 
+<
+	variant = {value: w.lexval, effects: EL.list}
+>
+
+37) EFF -> flag_name = bool 
+<
+	effect = {type: 'set_flag', target: f.lexval, value: b.lexval}
+>
+
+38) EFF -> counter_name digit_operation digit 
+<
+	effect = {type: 'change_counter', target: c.lexval, op: do.lexval, value: d.lexval}
+>
+
+39) EFFLIST -> EFF , EFF 
+<
+	list = [E1.effect, E2.effect]
+>
+
+40) VARLE -> if COND JUMP
+<
+	V.varle = (type:varle, C.boollist, J.jump)
+>
+
+41) COND -> COND and COND 
+<
+	boollist = {left_list: C1.boollist; op: 'and' right_list: C2.boollist}
+>
+
+42) COND -> COND or COND 
+<
+	boollist = {left_list: C1.boollist; op: 'or' right_list: C2.boollist}
+>
+
+43) COND -> not COND 
+<
+	boollist = {op: 'not' right_list: C1.boollist}
+>
+
+44) COND -> flag_name is bool 
+<
+	boollist = {type: 'check_flag', target: f.lexval, op: 'is', value: b.lexval}
+>
+
+45) COND -> counter_name bool_operation digit 
+<
+	boollist = {type: 'check_counter', target: c.lexval, op: bo.lexval, value: d.lexval}
+>
+
+46) JUMP -> jump mark_name
+<
+	jump = (type:jump, mn.lexval)
+>
+
+47) MARK -> mark mark_name
+<
+	mark = (type:mark, mn.lexval)
+>
+
+48) LOADSCENE -> load_scene path
+<
+	next_scene = (type:loadscene, p.lexval)
+>
+
+
+
+

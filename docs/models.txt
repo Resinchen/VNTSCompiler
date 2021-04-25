@@ -1,0 +1,32 @@
+ИГРА:
+ название - varchar(unique)
+ автор - varchar
+ версия - varchar
+ дата создания - date
+ дата обновления - date
+ кол-во игроков - int(default=0)
+ теги - varchar[]
+ Х> ЗВУКИ - FK
+ Х> СПРАЙТЫ - FK
+ Х> КАРТИНКИ - FK
+ Х> СКРИПТЫ - FK
+
+ЗВУКИ:
+ название - varchar(unique)
+ файл - varchar(unique)
+ Х> ИГРА - FK
+
+СПРАЙТЫ:
+ название - varchar(unique)
+ файл - varchar(unique)
+ Х> ИГРА - FK
+
+КАРТИНКИ:
+ название - varchar(unique)
+ файл - varchar(unique)
+ Х> ИГРА - FK
+
+СКРИПТЫ:
+ название - varchar(unique)
+ файл - varchar(unique)
+ Х> ИГРА - FK
